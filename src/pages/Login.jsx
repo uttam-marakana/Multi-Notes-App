@@ -1,8 +1,8 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import ThemeToggle from "../components/ThemeToggle";
 
 export default function Login() {
@@ -11,6 +11,7 @@ export default function Login() {
   const { login } = useAuth();
   const { colors } = useTheme();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -31,7 +32,8 @@ export default function Login() {
       localStorage.setItem("userId", ""); // Will be set by auth context
       toast.success("Login successful!");
       setTimeout(() => {
-        navigate("/dashboard");
+        const redirectTo = searchParams.get("redirect") || "/dashboard";
+        navigate(redirectTo);
       }, 500);
     } catch (error) {
       toast.error(error.message || "Failed to log in");

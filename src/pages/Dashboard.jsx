@@ -44,23 +44,34 @@ const Dashboard = () => {
             </h1>
           </div>
 
-          <div className="dashboard-welcome" style={{ color: colors.text }}>
-            <p className="greeting-text">
-              {getGreetingMessage()},{" "}
-              <strong>{currentUser.email?.split("@")[0]}</strong>!
-            </p>
-          </div>
+          {currentUser && (
+            <div className="dashboard-welcome" style={{ color: colors.text }}>
+              <p className="greeting-text">
+                {getGreetingMessage()},{" "}
+                <strong>{currentUser.email?.split("@")[0]}</strong>!
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="dashboard-actions">
           <ThemeToggle />
-          <button
-            onClick={handleLogout}
-            className="btn btn-danger"
-            title="Logout"
-          >
-            🚪 Logout
-          </button>
+          {currentUser ? (
+            <button
+              onClick={handleLogout}
+              className="btn btn-danger"
+              title="Logout"
+            >
+              🚪 Logout
+            </button>
+          ) : (
+            <button
+              onClick={() => navigate("/login")}
+              className="btn btn-primary"
+            >
+              🔑 Login
+            </button>
+          )}
         </div>
       </div>
 
@@ -73,8 +84,38 @@ const Dashboard = () => {
         </div>
       )}
 
+      {!currentUser && (
+        <div
+          style={{
+            backgroundColor: colors.info,
+            color: "white",
+            padding: "1rem",
+            margin: "1rem",
+            borderRadius: "0.5rem",
+            textAlign: "center",
+          }}
+        >
+          📌 <strong>Welcome!</strong> Please{" "}
+          <button
+            onClick={() => navigate("/login")}
+            style={{
+              background: "none",
+              border: "none",
+              color: "white",
+              textDecoration: "underline",
+              cursor: "pointer",
+              fontSize: "inherit",
+              fontWeight: "bold",
+            }}
+          >
+            login
+          </button>{" "}
+          to create and manage boards and notes.
+        </div>
+      )}
+
       <div className="dashboard-content container">
-        <BoardManager userId={currentUser.uid} />
+        <BoardManager userId={currentUser?.uid} />
       </div>
     </div>
   );
