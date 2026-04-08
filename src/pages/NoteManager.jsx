@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { useAuth } from "../contexts/AuthContext";
 import { useNote } from "../contexts/NoteContext";
 import { useBoard } from "../contexts/BoardContext";
 import { useTheme } from "../contexts/ThemeContext";
@@ -10,6 +11,7 @@ export default function NoteManager() {
   const [searchParams] = useSearchParams();
   const boardId = searchParams.get("boardId");
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const { notes, fetchNotes, deleteNote, toggleNotePin, updateNoteOrder } =
     useNote();
   const { boards } = useBoard();
@@ -24,6 +26,11 @@ export default function NoteManager() {
   const board = boards.find((b) => b.id === boardId);
 
   const handleAddNote = () => {
+    if (!currentUser) {
+      toast.error("Please login to create notes");
+      navigate(`/login?redirect=/notes/add?boardId=${boardId}`);
+      return;
+    }
     if (!boardId) {
       toast.error("Board ID is required");
       return;
@@ -32,10 +39,21 @@ export default function NoteManager() {
   };
 
   const handleEditNote = (noteId) => {
+    if (!currentUser) {
+      toast.error("Please login to edit notes");
+      navigate(`/login?redirect=/notes/edit/${noteId}?boardId=${boardId}`);
+      return;
+    }
     navigate(`/notes/edit/${noteId}?boardId=${boardId}`);
   };
 
   const handleDeleteNote = async (noteId) => {
+    if (!currentUser) {
+      toast.error("Please login to delete notes");
+      navigate(`/login?redirect=/notes?boardId=${boardId}`);
+      return;
+    }
+
     if (!window.confirm("Are you sure you want to delete this note?")) return;
 
     try {
@@ -47,6 +65,12 @@ export default function NoteManager() {
   };
 
   const handlePin = async (noteId) => {
+    if (!currentUser) {
+      toast.error("Please login to pin notes");
+      navigate(`/login?redirect=/notes?boardId=${boardId}`);
+      return;
+    }
+
     try {
       await toggleNotePin(boardId, noteId);
       toast.success("Note updated!");
