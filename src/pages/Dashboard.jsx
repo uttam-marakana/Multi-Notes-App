@@ -52,7 +52,7 @@ const Dashboard = () => {
             />
             <div>
               <h1 className="dashboard-title" style={{ color: colors.text }}>
-                📔 Multi-Notes
+                Noteflow
               </h1>
               <p
                 style={{
