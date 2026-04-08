@@ -15,14 +15,14 @@
       }
 
       const testFavicon = new Image();
-      testFavicon.src = "/assets/images/tabLogo.png";
+      testFavicon.src = "/assets/images/favicon.png";
 
       testFavicon.onload = function () {
         setFavicon(testFavicon.src);
       };
 
       testFavicon.onerror = function () {
-        setFavicon("/assets/images/Notifio-me.png");
+        setFavicon("/assets/images/favicon.png");
       };
     </script>
 
@@ -33,7 +33,7 @@
       crossorigin="anonymous"
     />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Secret-Me Note App</title>
+    <title>noteflow</title>
   </head>
 
   <body>
