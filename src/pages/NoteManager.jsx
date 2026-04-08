@@ -122,12 +122,12 @@ export default function NoteManager() {
   if (!boardId || !board) {
     return (
       <div
-        className="note-manager"
+        className="note-manager glass-container"
         style={{ backgroundColor: colors.background }}
       >
         <div className="container">
           <div
-            className="empty-state"
+            className="empty-state glass-card"
             style={{
               backgroundColor: colors.surface,
               borderColor: colors.border,
@@ -151,11 +151,11 @@ export default function NoteManager() {
 
   return (
     <div
-      className="note-manager"
+      className="note-manager glass-container"
       style={{ backgroundColor: colors.background }}
     >
       <div className="container">
-        <div className="note-manager-header">
+        <div className="note-manager-header glass-card">
           <div>
             <h2 style={{ color: colors.text, margin: 0 }}>📋 {board.name}</h2>
             {board.description && (

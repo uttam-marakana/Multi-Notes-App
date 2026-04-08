@@ -128,12 +128,12 @@ export default function NoteEdit() {
 
   return (
     <div
-      className="add-note-container"
+      className="add-note-container glass-container"
       style={{ backgroundColor: colors.background }}
     >
       <div className="container">
         <div
-          className="add-note-card"
+          className="add-note-card glass-card"
           style={{
             backgroundColor: colors.surface,
             borderColor: colors.border,

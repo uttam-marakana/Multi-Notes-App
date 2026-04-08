@@ -53,7 +53,7 @@ export default function Login() {
 
       <div className="auth-container">
         <div
-          className="auth-card"
+          className="auth-card glass-card"
           style={{
             backgroundColor: colors.surface,
             borderColor: colors.border,
