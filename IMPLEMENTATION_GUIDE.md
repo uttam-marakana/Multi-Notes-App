@@ -1,4 +1,4 @@
-# Multi-Notes App - Premium UI Implementation Guide
+# Noteflow App - Premium UI Implementation Guide
 
 ## Overview
 

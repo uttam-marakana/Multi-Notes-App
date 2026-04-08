@@ -1,4 +1,4 @@
-# 📔 Multi-Notes App
+# 📔 Noteflow App
 
 A premium React-based note and board management application with advanced features including drag-and-drop, PIN protection, priority levels, file attachments, and guest/authenticated user modes.
 
@@ -71,7 +71,7 @@ A premium React-based note and board management application with advanced featur
 ## 🏗️ Project Structure
 
 ```
-Multi-Notes-App/
+Noteflow-App/
 ├── public/                          # Static assets
 │   └── images/                      # App images
 │
@@ -277,7 +277,7 @@ Multi-Notes-App/
 ```bash
 # Clone repository
 git clone <repo-url>
-cd Multi-Notes-App
+cd Noteflow-App
 
 # Install dependencies
 yarn install
