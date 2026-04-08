@@ -42,15 +42,10 @@ function App() {
                       <Route path="/login" element={<Login />} />
                       <Route path="/signup" element={<SignUp />} />
 
+                      {/* Dashboard - Public Access (allows guest browsing) */}
+                      <Route path="/dashboard" element={<Dashboard />} />
+
                       {/* Protected Routes */}
-                      <Route
-                        path="/dashboard"
-                        element={
-                          <ProtectedRoute>
-                            <Dashboard />
-                          </ProtectedRoute>
-                        }
-                      />
                       <Route
                         path="/boards"
                         element={
