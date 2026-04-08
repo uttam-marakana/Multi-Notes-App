@@ -1,10 +1,13 @@
 import React, { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 import { useNavigate } from "react-router-dom";
+import ThemeToggle from "../components/ThemeToggle";
 import BoardManager from "./BoardManager";
 
 const Dashboard = () => {
   const { currentUser, logout } = useAuth();
+  const { colors } = useTheme();
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
@@ -12,7 +15,7 @@ const Dashboard = () => {
     try {
       setError("");
       await logout();
-      navigate("/auth/login");
+      navigate("/login");
     } catch {
       setError("Please try later");
     }
@@ -25,20 +28,54 @@ const Dashboard = () => {
     return "Good Evening";
   };
 
-
   return (
-    <div className="dashboard">
-      <div className="dashboard-header d-flex justify-content-between align-items-center">
-        <h1 style={{ color: "white" }}>
-          {getGreetingMessage()}, {currentUser.userName || currentUser.displayName || "User"}!
-        </h1>
-        <button onClick={handleLogout} className="btn btn-danger">
-          Logout
-        </button>
-        {error && <strong className="text-white">{error}</strong>}
+    <div className="dashboard" style={{ backgroundColor: colors.background }}>
+      <div
+        className="dashboard-header"
+        style={{
+          backgroundColor: colors.surface,
+          borderBottomColor: colors.border,
+        }}
+      >
+        <div className="dashboard-header-content">
+          <div className="dashboard-brand">
+            <h1 className="dashboard-title" style={{ color: colors.text }}>
+              📔 Multi-Notes
+            </h1>
+          </div>
+
+          <div className="dashboard-welcome" style={{ color: colors.text }}>
+            <p className="greeting-text">
+              {getGreetingMessage()},{" "}
+              <strong>{currentUser.email?.split("@")[0]}</strong>!
+            </p>
+          </div>
+        </div>
+
+        <div className="dashboard-actions">
+          <ThemeToggle />
+          <button
+            onClick={handleLogout}
+            className="btn btn-danger"
+            title="Logout"
+          >
+            🚪 Logout
+          </button>
+        </div>
       </div>
 
-      <BoardManager userId={currentUser.uid} />
+      {error && (
+        <div
+          className="alert alert-error"
+          style={{ margin: "var(--spacing-lg)" }}
+        >
+          {error}
+        </div>
+      )}
+
+      <div className="dashboard-content container">
+        <BoardManager userId={currentUser.uid} />
+      </div>
     </div>
   );
 };

@@ -1,123 +1,150 @@
 import React, { useRef, useState } from "react";
+import toast from "react-hot-toast";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 import { Link, useNavigate } from "react-router-dom";
+import ThemeToggle from "../components/ThemeToggle";
 
 export default function Login() {
   const emailRef = useRef();
   const passwordRef = useRef();
   const { login } = useAuth();
+  const { colors } = useTheme();
   const navigate = useNavigate();
 
   const [showPassword, setShowPassword] = useState(false);
-  const [popupMessage, setPopupMessage] = useState("");
-  const [showPopup, setShowPopup] = useState(false);
-
-  const togglePasswordVisibility = () => {
-    setShowPassword((prevState) => !prevState);
-  };
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const email = emailRef.current.value.trim();
+    const password = passwordRef.current.value;
+
+    if (!email || !password) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    setLoading(true);
     try {
-      await login(emailRef.current.value, passwordRef.current.value);
-      setPopupMessage("Login successful!");
-      setShowPopup(true);
+      await login(email, password);
+      localStorage.setItem("userId", ""); // Will be set by auth context
+      toast.success("Login successful!");
       setTimeout(() => {
-        setShowPopup(false);
         navigate("/dashboard");
-      });
+      }, 500);
     } catch (error) {
-      setPopupMessage("Failed to log in: " + error.message);
-      setShowPopup(true);
-      setTimeout(() => {
-        setShowPopup(false);
-      }, 4000);
+      toast.error(error.message || "Failed to log in");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="d-flex justify-content-center align-items-center vh-100">
-      <div className="card col-lg-4 col-md-6 col-10 p-4 shadow">
-        <h2 className="text-success text-center">Login</h2>
-        <p className="text-muted text-center">Your personal space awaits</p>
-        <form className="form" onSubmit={handleSubmit}>
-          <div className="row g-3">
-            <div className="col-12">
-              <input
-                className="form-control"
-                ref={emailRef}
-                type="email"
-                placeholder="Email"
-                required
-              />
-            </div>
-            <div className="col-12 position-relative">
-              <input
-                className="form-control"
-                ref={passwordRef}
-                type={showPassword ? "text" : "password"}
-                placeholder="Password"
-                required
-              />
-              <span
-                onClick={togglePasswordVisibility}
-                className="position-absolute"
-                style={{
-                  right: "20px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  cursor: "pointer",
-                }}
-              >
-                {showPassword ? "👁" : "👀"}
-              </span>
-            </div>
-          </div>
-          <div className="form-check text-center mt-2">
-            <input
-              className="form-check-input me-2"
-              type="checkbox"
-              id="rememberMe"
-            />
-            <label className="form-check-label" htmlFor="rememberMe">
-              Remember Me
-            </label>
-            <Link to="#" className="text-decoration-none text-success ms-3">
-              Forgot Password?
-            </Link>
-          </div>
-          <div className="col-12">
-            <button className="btn btn-success w-100 mt-3" type="submit">
-              Login
-            </button>
-          </div>
-          <div className="text-center mt-3">
-            Don't have an account?{" "}
-            <Link to="/signup" className="text-decoration-none text-info">
-              Sign Up
-            </Link>
-          </div>
-        </form>
+    <div className="auth-page" style={{ backgroundColor: colors.background }}>
+      <div className="auth-header">
+        <h1 className="auth-brand" style={{ color: colors.primary }}>
+          📝 Multi-Notes
+        </h1>
+        <ThemeToggle />
       </div>
 
-      {showPopup && (
+      <div className="auth-container">
         <div
-          className="popup-message"
+          className="auth-card"
           style={{
-            position: "fixed",
-            top: "20px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            backgroundColor: "#28a745",
-            color: "#fff",
-            padding: "10px 20px",
-            borderRadius: "5px",
-            zIndex: 9999,
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+            boxShadow: `0 10px 40px ${colors.shadowColor}`,
           }}
         >
-          {popupMessage}
+          <h2 className="auth-title" style={{ color: colors.text }}>
+            Welcome Back
+          </h2>
+          <p className="auth-subtitle" style={{ color: colors.textMuted }}>
+            Sign in to access your notes and boards
+          </p>
+
+          <form className="auth-form" onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label style={{ color: colors.text }}>Email Address</label>
+              <input
+                ref={emailRef}
+                type="email"
+                placeholder="you@example.com"
+                required
+                style={{
+                  backgroundColor: colors.background,
+                  borderColor: colors.border,
+                  color: colors.text,
+                }}
+              />
+            </div>
+
+            <div className="form-group">
+              <label style={{ color: colors.text }}>Password</label>
+              <div className="password-input-wrapper">
+                <input
+                  ref={passwordRef}
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  required
+                  style={{
+                    backgroundColor: colors.background,
+                    borderColor: colors.border,
+                    color: colors.text,
+                  }}
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{ color: colors.textMuted }}
+                >
+                  {showPassword ? "🙈" : "👁️"}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="btn btn-primary btn-lg"
+              disabled={loading}
+              style={{ width: "100%", marginTop: "1.5rem" }}
+            >
+              {loading ? "Signing in..." : "🔓 Sign In"}
+            </button>
+          </form>
+
+          <div className="auth-footer">
+            <p style={{ color: colors.textMuted, marginBottom: "1rem" }}>
+              Don't have an account?{" "}
+              <Link
+                to="/signup"
+                style={{
+                  color: colors.primary,
+                  fontWeight: "600",
+                  textDecoration: "none",
+                }}
+              >
+                Create one here
+              </Link>
+            </p>
+          </div>
         </div>
-      )}
+
+        <div className="auth-features" style={{ color: colors.textMuted }}>
+          <div className="feature">
+            <span>✨</span> Premium Design
+          </div>
+          <div className="feature">
+            <span>🔒</span> Secure Notes
+          </div>
+          <div className="feature">
+            <span>🎨</span> Dark & Light Mode
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
