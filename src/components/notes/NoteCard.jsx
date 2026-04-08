@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useTheme } from "../../contexts/ThemeContext";
+import { useAuth } from "../../contexts/AuthContext";
 import PINModal from "../PINModal";
 import {
   getPriorityColor,
@@ -16,11 +17,14 @@ export default function NoteCard({
   isDragging = false,
 }) {
   const { colors, priorityColors } = useTheme();
+  const { currentUser } = useAuth();
   const [showPINModal, setShowPINModal] = useState(false);
   const [isVerified, setIsVerified] = useState(!note.isProtected);
-  const currentUserId = localStorage.getItem("userId");
+  const currentUserId = currentUser?.uid;
+  const isOwner = !note.ownerId || note.ownerId === currentUserId;
 
   const handleEdit = () => {
+    if (!isOwner) return;
     if (note.isProtected && !isVerified) {
       setShowPINModal(true);
       return;
@@ -58,6 +62,24 @@ export default function NoteCard({
             style={{ backgroundColor: colors.danger }}
           >
             🔒
+          </div>
+        )}
+
+        {/* Read-Only Banner */}
+        {!isOwner && (
+          <div
+            style={{
+              position: "absolute",
+              top: "1rem",
+              left: "1rem",
+              backgroundColor: colors.warning,
+              color: "white",
+              padding: "0.25rem 0.5rem",
+              borderRadius: "0.5rem",
+              fontSize: "0.75rem",
+            }}
+          >
+            Read Only
           </div>
         )}
 
@@ -103,13 +125,17 @@ export default function NoteCard({
           <button
             className="btn btn-sm btn-ghost"
             onClick={handleEdit}
-            title="Edit note"
-            style={{ color: colors.text }}
+            title={isOwner ? "Edit note" : "Read only"}
+            style={{
+              color: isOwner ? colors.text : colors.textMuted,
+              cursor: isOwner ? "pointer" : "not-allowed",
+            }}
+            disabled={!isOwner}
           >
             ✏️
           </button>
 
-          {isVerified && (
+          {isOwner && isVerified && (
             <>
               <button
                 className="btn btn-sm btn-ghost"
