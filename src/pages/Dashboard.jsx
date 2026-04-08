@@ -46,7 +46,7 @@ const Dashboard = () => {
           <div className="dashboard-brand">
             <img
               src={theme === "dark" ? lightLogo : darkLogo}
-              alt="Multi-Notes Logo"
+              alt="Noteflow Logo"
               className="dashboard-logo"
               style={{ maxHeight: 50, marginRight: "0.75rem" }}
             />

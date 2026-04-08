@@ -46,7 +46,7 @@ export default function Login() {
     <div className="auth-page" style={{ backgroundColor: colors.background }}>
       <div className="auth-header">
         <h1 className="auth-brand" style={{ color: colors.primary }}>
-          📝 Multi-Notes
+          Noteflow
         </h1>
         <ThemeToggle />
       </div>
