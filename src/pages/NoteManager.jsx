@@ -206,6 +206,3 @@ export default function NoteManager() {
     </div>
   );
 }
-    </div>
-  );
-}

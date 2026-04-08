@@ -269,9 +269,7 @@ export default function NoteEdit() {
                   borderRadius: "0.5rem",
                 }}
               />
-              {fileError && (
-                <small className="form-error">{fileError}</small>
-              )}
+              {fileError && <small className="form-error">{fileError}</small>}
               {(existingFiles.length > 0 || newFiles.length > 0) && (
                 <div
                   style={{
@@ -304,7 +302,9 @@ export default function NoteEdit() {
                       <button
                         type="button"
                         className="btn btn-sm btn-ghost"
-                        onClick={() => removeExistingFile(file.path || file.url)}
+                        onClick={() =>
+                          removeExistingFile(file.path || file.url)
+                        }
                         style={{ color: colors.danger }}
                       >
                         Remove
@@ -340,6 +340,21 @@ export default function NoteEdit() {
             </div>
 
             <div className="form-actions">
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={() => navigate(-1)}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={loading}
+              >
+                {loading ? "Saving..." : "Save Note"}
+              </button>
+            </div>
           </form>
         </div>
       </div>
