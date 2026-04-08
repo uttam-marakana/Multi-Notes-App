@@ -17,7 +17,35 @@ export default function AddNote() {
   const [isProtected, setIsProtected] = useState(false);
   const [pin, setPin] = useState("");
   const [pinConfirm, setPinConfirm] = useState("");
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [fileError, setFileError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    const allowedFiles = files.filter((file) =>
+      [
+        "image/jpeg",
+        "image/png",
+        "image/jpg",
+        "image/gif",
+        "application/pdf",
+      ].includes(file.type),
+    );
+
+    if (allowedFiles.length !== files.length) {
+      setFileError("Only JPG, PNG, GIF, and PDF files are allowed.");
+    } else {
+      setFileError("");
+    }
+
+    setSelectedFiles((prev) => [...prev, ...allowedFiles].slice(0, 10));
+    e.target.value = null;
+  };
+
+  const removeSelectedFile = (fileName) => {
+    setSelectedFiles((prev) => prev.filter((file) => file.name !== fileName));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -53,6 +81,7 @@ export default function AddNote() {
         priority,
         isProtected,
         pin: isProtected ? pin : null,
+        files: selectedFiles,
       });
 
       toast.success("Note created successfully!");
@@ -191,6 +220,60 @@ export default function AddNote() {
                       borderRadius: "0.5rem",
                     }}
                   />
+                </div>
+              )}
+            </div>
+
+            <div className="form-group">
+              <label style={{ color: colors.text }}>Attachments</label>
+              <input
+                type="file"
+                multiple
+                accept="image/png,image/jpeg,image/jpg,image/gif,application/pdf"
+                onChange={handleFileChange}
+                style={{
+                  backgroundColor: colors.background,
+                  borderColor: colors.border,
+                  color: colors.text,
+                  padding: "0.75rem",
+                  borderRadius: "0.5rem",
+                }}
+              />
+              {fileError && <small className="form-error">{fileError}</small>}
+              {selectedFiles.length > 0 && (
+                <div
+                  style={{
+                    marginTop: "0.75rem",
+                    display: "grid",
+                    gap: "0.5rem",
+                  }}
+                >
+                  {selectedFiles.map((file) => (
+                    <div
+                      key={file.name}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        padding: "0.75rem",
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: "0.5rem",
+                        backgroundColor: colors.surface,
+                      }}
+                    >
+                      <span style={{ color: colors.text, fontSize: "0.95rem" }}>
+                        {file.name}
+                      </span>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-ghost"
+                        onClick={() => removeSelectedFile(file.name)}
+                        style={{ color: colors.danger }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

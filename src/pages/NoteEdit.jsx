@@ -15,15 +15,55 @@ export default function NoteEdit() {
   const titleRef = useRef();
   const contentRef = useRef();
   const [priority, setPriority] = useState("low");
+  const [isProtected, setIsProtected] = useState(false);
+  const [pin, setPin] = useState("");
+  const [pinConfirm, setPinConfirm] = useState("");
+  const [existingFiles, setExistingFiles] = useState([]);
+  const [newFiles, setNewFiles] = useState([]);
+  const [removedFiles, setRemovedFiles] = useState([]);
+  const [fileError, setFileError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const note = notes.find((n) => n.id === noteId);
+
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    const allowedFiles = files.filter((file) =>
+      [
+        "image/jpeg",
+        "image/png",
+        "image/jpg",
+        "image/gif",
+        "application/pdf",
+      ].includes(file.type),
+    );
+
+    if (allowedFiles.length !== files.length) {
+      setFileError("Only JPG, PNG, GIF, and PDF files are allowed.");
+    } else {
+      setFileError("");
+    }
+
+    setNewFiles((prev) => [...prev, ...allowedFiles].slice(0, 10));
+    e.target.value = null;
+  };
+
+  const removeExistingFile = (filePath) => {
+    setExistingFiles((prev) => prev.filter((file) => file.path !== filePath));
+    setRemovedFiles((prev) => [...prev, filePath]);
+  };
+
+  const removeNewFile = (fileName) => {
+    setNewFiles((prev) => prev.filter((file) => file.name !== fileName));
+  };
 
   useEffect(() => {
     if (note) {
       titleRef.current.value = note.title || "";
       contentRef.current.value = note.content || "";
       setPriority(note.priority || "low");
+      setIsProtected(note.isProtected || false);
+      setExistingFiles(note.files || []);
     }
   }, [note]);
 
@@ -42,12 +82,28 @@ export default function NoteEdit() {
       return;
     }
 
+    if (isProtected) {
+      if (pin && pin.length !== 4) {
+        toast.error("PIN must be 4 digits");
+        return;
+      }
+      if (pin && pin !== pinConfirm) {
+        toast.error("PINs do not match");
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       await updateNote(boardId, noteId, {
         title,
         content,
         priority,
+        isProtected,
+        pin: isProtected ? pin || note.pin : null,
+        newFiles,
+        removeFiles: removedFiles,
+        files: existingFiles,
       });
 
       toast.success("Note updated successfully!");
@@ -136,22 +192,154 @@ export default function NoteEdit() {
               </div>
             </div>
 
-            <div className="form-actions">
-              <button
-                type="button"
-                className="btn btn-ghost"
-                onClick={() => navigate(-1)}
+            <div className="form-group">
+              <label
+                style={{
+                  color: colors.text,
+                  display: "flex",
+                  gap: "0.5rem",
+                  alignItems: "center",
+                }}
               >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={loading}
-              >
-                {loading ? "Saving..." : "💾 Save Changes"}
-              </button>
+                <input
+                  type="checkbox"
+                  checked={isProtected}
+                  onChange={(e) => setIsProtected(e.target.checked)}
+                />
+                🔒 Protect with PIN
+              </label>
+
+              {isProtected && (
+                <div
+                  style={{
+                    marginTop: "1rem",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "0.75rem",
+                  }}
+                >
+                  <input
+                    type="password"
+                    placeholder="4-digit PIN"
+                    maxLength="4"
+                    value={pin}
+                    onChange={(e) =>
+                      setPin(e.target.value.replace(/[^0-9]/g, ""))
+                    }
+                    style={{
+                      backgroundColor: colors.background,
+                      borderColor: colors.border,
+                      color: colors.text,
+                      padding: "0.5rem",
+                      borderRadius: "0.5rem",
+                    }}
+                  />
+                  <input
+                    type="password"
+                    placeholder="Confirm PIN"
+                    maxLength="4"
+                    value={pinConfirm}
+                    onChange={(e) =>
+                      setPinConfirm(e.target.value.replace(/[^0-9]/g, ""))
+                    }
+                    style={{
+                      backgroundColor: colors.background,
+                      borderColor: colors.border,
+                      color: colors.text,
+                      padding: "0.5rem",
+                      borderRadius: "0.5rem",
+                    }}
+                  />
+                </div>
+              )}
             </div>
+
+            <div className="form-group">
+              <label style={{ color: colors.text }}>Attachments</label>
+              <input
+                type="file"
+                multiple
+                accept="image/png,image/jpeg,image/jpg,image/gif,application/pdf"
+                onChange={handleFileChange}
+                style={{
+                  backgroundColor: colors.background,
+                  borderColor: colors.border,
+                  color: colors.text,
+                  padding: "0.75rem",
+                  borderRadius: "0.5rem",
+                }}
+              />
+              {fileError && (
+                <small className="form-error">{fileError}</small>
+              )}
+              {(existingFiles.length > 0 || newFiles.length > 0) && (
+                <div
+                  style={{
+                    marginTop: "0.75rem",
+                    display: "grid",
+                    gap: "0.5rem",
+                  }}
+                >
+                  {existingFiles.map((file) => (
+                    <div
+                      key={file.path || file.url}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        padding: "0.75rem",
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: "0.5rem",
+                        backgroundColor: colors.surface,
+                      }}
+                    >
+                      <a
+                        href={file.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{ color: colors.primary }}
+                      >
+                        {file.name}
+                      </a>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-ghost"
+                        onClick={() => removeExistingFile(file.path || file.url)}
+                        style={{ color: colors.danger }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                  {newFiles.map((file) => (
+                    <div
+                      key={file.name}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        padding: "0.75rem",
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: "0.5rem",
+                        backgroundColor: colors.surface,
+                      }}
+                    >
+                      <span style={{ color: colors.text }}>{file.name}</span>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-ghost"
+                        onClick={() => removeNewFile(file.name)}
+                        style={{ color: colors.danger }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="form-actions">
           </form>
         </div>
       </div>
