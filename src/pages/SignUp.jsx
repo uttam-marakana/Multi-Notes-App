@@ -1,178 +1,209 @@
 import React, { useRef, useState } from "react";
+import toast from "react-hot-toast";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 import { Link, useNavigate } from "react-router-dom";
+import ThemeToggle from "../components/ThemeToggle";
 
 export default function SignUp() {
   const navigate = useNavigate();
-  const [showPassword, setShowPassword] = useState(false);
-  const [popupMessage, setPopupMessage] = useState("");
-  const [popupVisible, setPopupVisible] = useState(false);
+  const { signUp } = useAuth();
+  const { colors } = useTheme();
 
-  const firstNameRef = useRef();
-  const userNameRef = useRef();
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const nameRef = useRef();
   const emailRef = useRef();
   const passwordRef = useRef();
   const confirmPasswordRef = useRef();
-  const contactRef = useRef();
-  const genderRef = useRef();
-  const { signUp } = useAuth();
-
-  const togglePasswordVisibility = () => {
-    setShowPassword((prevState) => !prevState);
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (passwordRef.current.value !== confirmPasswordRef.current.value) {
-      setPopupMessage("Passwords do not match!");
-      setPopupVisible(true);
-      setTimeout(() => setPopupVisible(false));
+
+    const name = nameRef.current.value.trim();
+    const email = emailRef.current.value.trim();
+    const password = passwordRef.current.value;
+    const confirmPassword = confirmPasswordRef.current.value;
+
+    if (!name || !email || !password || !confirmPassword) {
+      toast.error("Please fill in all fields");
       return;
     }
 
-    const userDetails = {
-      firstName: firstNameRef.current.value,
-      userName: userNameRef.current.value,
-      email: emailRef.current.value,
-      password: passwordRef.current.value,
-      contact: contactRef.current.value,
-      gender: genderRef.current.value,
-    };
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters long");
+      return;
+    }
 
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    setLoading(true);
     try {
-      await signUp(
-        emailRef.current.value,
-        passwordRef.current.value,
-        userDetails
-      );
-      setPopupMessage("Sign-up successful!");
-      setPopupVisible(true);
-      setTimeout(() => {
-        setPopupVisible(false);
-        navigate("/login");
+      await signUp(email, password, {
+        displayName: name,
+        email: email,
+        createdAt: new Date().toISOString(),
       });
+
+      toast.success("Account created successfully!");
+      setTimeout(() => {
+        navigate("/login");
+      }, 500);
     } catch (error) {
-      setPopupMessage(error.message);
-      setPopupVisible(true);
-      setTimeout(() => setPopupVisible(false), 10000);
+      toast.error(error.message || "Failed to create account");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="d-flex justify-content-center align-items-center min-vh-100">
-      <div className="card p-4 shadow w-100" style={{ maxWidth: "500px" }}>
-        <h2 className="text-success text-center">Sign Up</h2>
-        <p className="text-muted text-center">
-          Create your personal Diaries & Notes space with Us
-        </p>
-        {popupVisible && (
-          <div className="popup-notification">{popupMessage}</div>
-        )}
-        <form className="form" onSubmit={handleSubmit}>
-          <div className="row g-3">
-            <div className="col-12">
+    <div className="auth-page" style={{ backgroundColor: colors.background }}>
+      <div className="auth-header">
+        <h1 className="auth-brand" style={{ color: colors.primary }}>
+          📝 Multi-Notes
+        </h1>
+        <ThemeToggle />
+      </div>
+
+      <div className="auth-container">
+        <div
+          className="auth-card"
+          style={{
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+            boxShadow: `0 10px 40px ${colors.shadowColor}`,
+          }}
+        >
+          <h2 className="auth-title" style={{ color: colors.text }}>
+            Create Account
+          </h2>
+          <p className="auth-subtitle" style={{ color: colors.textMuted }}>
+            Join us and start organizing your notes today
+          </p>
+
+          <form className="auth-form" onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label style={{ color: colors.text }}>Full Name</label>
               <input
-                className="form-control"
-                ref={firstNameRef}
+                ref={nameRef}
                 type="text"
-                placeholder="Name"
+                placeholder="John Doe"
                 required
+                style={{
+                  backgroundColor: colors.background,
+                  borderColor: colors.border,
+                  color: colors.text,
+                }}
               />
             </div>
-            <div className="col-12">
+
+            <div className="form-group">
+              <label style={{ color: colors.text }}>Email Address</label>
               <input
-                className="form-control"
-                ref={userNameRef}
-                type="text"
-                placeholder="User Name"
-                required
-              />
-            </div>
-            <div className="col-12">
-              <input
-                className="form-control"
                 ref={emailRef}
                 type="email"
-                placeholder="Email"
+                placeholder="you@example.com"
                 required
-              />
-            </div>
-            <div className="col-12">
-              <input
-                className="form-control"
-                ref={contactRef}
-                type="tel"
-                placeholder="Contact Number"
-                pattern="[0-9]{10}"
-                required
-              />
-            </div>
-            <div className="col-12">
-              <select
-                className="form-control"
-                ref={genderRef}
-                defaultValue=""
-                required
-              >
-                <option value="">Select Gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-            <div className="col-12 position-relative">
-              <input
-                className="form-control"
-                ref={passwordRef}
-                type={showPassword ? "text" : "password"}
-                placeholder="Password"
-                required
-              />
-              <span
-                onClick={togglePasswordVisibility}
-                className="position-absolute password-toggle-icon"
                 style={{
-                  top: "50%",
-                  right: "20px",
-                  transform: "translateY(-50%)",
-                  cursor: "pointer",
+                  backgroundColor: colors.background,
+                  borderColor: colors.border,
+                  color: colors.text,
+                }}
+              />
+            </div>
+
+            <div className="form-group">
+              <label style={{ color: colors.text }}>Password</label>
+              <div className="password-input-wrapper">
+                <input
+                  ref={passwordRef}
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Minimum 6 characters"
+                  required
+                  style={{
+                    backgroundColor: colors.background,
+                    borderColor: colors.border,
+                    color: colors.text,
+                  }}
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{ color: colors.textMuted }}
+                >
+                  {showPassword ? "🙈" : "👁️"}
+                </button>
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label style={{ color: colors.text }}>Confirm Password</label>
+              <div className="password-input-wrapper">
+                <input
+                  ref={confirmPasswordRef}
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Confirm your password"
+                  required
+                  style={{
+                    backgroundColor: colors.background,
+                    borderColor: colors.border,
+                    color: colors.text,
+                  }}
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{ color: colors.textMuted }}
+                >
+                  {showPassword ? "🙈" : "👁️"}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="btn btn-primary btn-lg"
+              disabled={loading}
+              style={{ width: "100%", marginTop: "1.5rem" }}
+            >
+              {loading ? "Creating account..." : "✨ Create Account"}
+            </button>
+          </form>
+
+          <div className="auth-footer">
+            <p style={{ color: colors.textMuted, marginBottom: 0 }}>
+              Already have an account?{" "}
+              <Link
+                to="/login"
+                style={{
+                  color: colors.primary,
+                  fontWeight: "600",
+                  textDecoration: "none",
                 }}
               >
-                {showPassword ? "👁" : "👀"}
-              </span>
-            </div>
-            <div className="col-12 position-relative">
-              <input
-                className="form-control"
-                ref={confirmPasswordRef}
-                type={showPassword ? "text" : "password"}
-                placeholder="Confirm Password"
-                required
-              />
-              <span
-                onClick={togglePasswordVisibility}
-                className="position-absolute password-toggle-icon"
-                style={{
-                  top: "50%",
-                  right: "20px",
-                  transform: "translateY(-50%)",
-                  cursor: "pointer",
-                }}
-              >
-                {showPassword ? "👁" : "👀"}
-              </span>
-            </div>
+                Sign in here
+              </Link>
+            </p>
           </div>
-          <button className="btn btn-success w-100 mt-3" type="submit">
-            Register
-          </button>
-          <div className="text-center mt-3">
-            Already have an account?{" "}
-            <Link to="/login" className="text-decoration-none text-info">
-              Login
-            </Link>
+        </div>
+
+        <div className="auth-features" style={{ color: colors.textMuted }}>
+          <div className="feature">
+            <span>🔐</span> Secure Accounts
           </div>
-        </form>
+          <div className="feature">
+            <span>📊</span> Organize Boards
+          </div>
+          <div className="feature">
+            <span>⚡</span> Fast & Reliable
+          </div>
+        </div>
       </div>
     </div>
   );
