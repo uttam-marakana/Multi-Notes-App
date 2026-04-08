@@ -6,6 +6,8 @@ import {
   getPriorityColor,
   truncateText,
   formatDate,
+  getFileIcon,
+  formatFileSize,
 } from "../../utils/helpers";
 
 export default function NoteCard({
@@ -108,6 +110,48 @@ export default function NoteCard({
         <p className="note-preview" style={{ color: colors.textMuted }}>
           {truncateText(note.content, 60)}
         </p>
+
+        {note.files?.length > 0 && (
+          <div className="note-files" style={{ borderColor: colors.border }}>
+            {note.files.slice(0, 3).map((file) => (
+              <a
+                key={file.path || file.url}
+                href={file.url}
+                target="_blank"
+                rel="noreferrer"
+                className="note-file-item"
+                style={{
+                  backgroundColor: colors.background,
+                  borderColor: colors.border,
+                  color: colors.text,
+                }}
+              >
+                {file.type?.startsWith("image/") ? (
+                  <img
+                    src={file.url}
+                    alt={file.name}
+                    className="note-file-thumb"
+                  />
+                ) : (
+                  <span className="note-file-icon">
+                    {getFileIcon(file.type)}
+                  </span>
+                )}
+                <span className="note-file-name">
+                  {truncateText(file.name, 16)}
+                </span>
+                <small className="note-file-size">
+                  {formatFileSize(file.size)}
+                </small>
+              </a>
+            ))}
+            {note.files.length > 3 && (
+              <span className="note-file-more">
+                +{note.files.length - 3} more
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Note Meta */}
         <div
