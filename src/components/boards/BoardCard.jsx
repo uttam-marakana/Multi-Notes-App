@@ -1,5 +1,7 @@
 import React, { useState } from "react";
+import toast from "react-hot-toast";
 import { useTheme } from "../../contexts/ThemeContext";
+import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { truncateText, formatDate } from "../../utils/helpers";
 import PINModal from "../PINModal";
@@ -11,12 +13,23 @@ export default function BoardCard({
   isDragging = false,
 }) {
   const { colors } = useTheme();
+  const { currentUser } = useAuth();
   const navigate = useNavigate();
   const [showPINModal, setShowPINModal] = useState(false);
   const [isVerified, setIsVerified] = useState(!board.isProtected);
-  const currentUserId = localStorage.getItem("userId");
+  const currentUserId = currentUser?.uid;
+  const isOwner = !board.ownerId || board.ownerId === currentUserId;
 
   const handleEdit = () => {
+    if (!currentUser) {
+      toast.error("Please login to edit boards");
+      navigate(`/login?redirect=/boards/edit/${board.id}`);
+      return;
+    }
+    if (!isOwner) {
+      toast.error("You can only edit your own boards");
+      return;
+    }
     if (board.isProtected && !isVerified) {
       setShowPINModal(true);
       return;
@@ -29,11 +42,15 @@ export default function BoardCard({
       setShowPINModal(true);
       return;
     }
+    if (!currentUser) {
+      toast.error("Please login to view notes");
+      navigate(`/login?redirect=/notes?boardId=${board.id}`);
+      return;
+    }
     navigate(`/notes?boardId=${board.id}`);
   };
 
   const handlePINSubmit = async (pin) => {
-    // Verify PIN - in production this should be done securely
     const { hashPIN } = await import("../../utils/helpers");
     if (hashPIN(pin) === board.pin) {
       setIsVerified(true);
