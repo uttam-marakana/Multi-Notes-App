@@ -1,10 +1,12 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAuth } from "../contexts/AuthContext";
 import { useNote } from "../contexts/NoteContext";
 import { useBoard } from "../contexts/BoardContext";
 import { useTheme } from "../contexts/ThemeContext";
+import { guestStorage } from "../utils/guestStorage";
+import ConfirmationModal from "../components/ConfirmationModal";
 import NoteList from "../components/notes/NoteList";
 
 export default function NoteManager() {
@@ -16,14 +18,23 @@ export default function NoteManager() {
     useNote();
   const { boards } = useBoard();
   const { colors } = useTheme();
+  const [guestNotes, setGuestNotes] = useState([]);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [confirmAction, setConfirmAction] = useState(null);
 
   useEffect(() => {
     if (boardId) {
-      fetchNotes(boardId);
+      if (currentUser) {
+        fetchNotes(boardId);
+      } else {
+        const saved = guestStorage.getNotes(boardId);
+        setGuestNotes(saved);
+      }
     }
-  }, [boardId, fetchNotes]);
+  }, [boardId, fetchNotes, currentUser]);
 
   const board = boards.find((b) => b.id === boardId);
+  const displayNotes = currentUser ? notes : guestNotes;
 
   const handleAddNote = () => {
     if (!currentUser) {
@@ -47,14 +58,24 @@ export default function NoteManager() {
     navigate(`/notes/edit/${noteId}?boardId=${boardId}`);
   };
 
-  const handleDeleteNote = async (noteId) => {
+  const handleDeleteNote = (noteId) => {
+    setConfirmAction({
+      type: "deleteNote",
+      noteId,
+      title: "Delete Note",
+      message: "This action cannot be undone. Delete this note?",
+    });
+    setShowConfirm(true);
+  };
+
+  const executeDeleteNote = async (noteId) => {
     if (!currentUser) {
-      toast.error("Please login to delete notes");
-      navigate(`/login?redirect=/notes?boardId=${boardId}`);
+      const updated = guestNotes.filter((n) => n.id !== noteId);
+      setGuestNotes(updated);
+      guestStorage.saveNotes(boardId, updated);
+      toast.success("Note deleted (temporary data)");
       return;
     }
-
-    if (!window.confirm("Are you sure you want to delete this note?")) return;
 
     try {
       await deleteNote(boardId, noteId);
@@ -64,18 +85,37 @@ export default function NoteManager() {
     }
   };
 
-  const handlePin = async (noteId) => {
+  const handlePin = (noteId) => {
     if (!currentUser) {
       toast.error("Please login to pin notes");
       navigate(`/login?redirect=/notes?boardId=${boardId}`);
       return;
     }
 
+    setConfirmAction({
+      type: "pinNote",
+      noteId,
+      title: "Pin Note",
+      message: "Update note pin status?",
+    });
+    setShowConfirm(true);
+  };
+
+  const executePinNote = async (noteId) => {
     try {
       await toggleNotePin(boardId, noteId);
       toast.success("Note updated!");
     } catch {
       toast.error("Failed to update note");
+    }
+  };
+
+  const handleConfirm = () => {
+    setShowConfirm(false);
+    if (confirmAction.type === "deleteNote") {
+      executeDeleteNote(confirmAction.noteId);
+    } else if (confirmAction.type === "pinNote") {
+      executePinNote(confirmAction.noteId);
     }
   };
 
@@ -134,14 +174,38 @@ export default function NoteManager() {
         </div>
 
         <NoteList
-          notes={notes}
+          notes={displayNotes}
           boardId={boardId}
           onEdit={handleEditNote}
           onDelete={handleDeleteNote}
           onPin={handlePin}
-          onReorder={(noteIds) => updateNoteOrder(boardId, noteIds)}
+          onReorder={(noteIds) => {
+            if (currentUser) {
+              updateNoteOrder(boardId, noteIds);
+            } else {
+              const reordered = noteIds.map((id) =>
+                guestNotes.find((n) => n.id === id),
+              );
+              setGuestNotes(reordered);
+              guestStorage.saveNotes(boardId, reordered);
+            }
+          }}
         />
       </div>
+
+      <ConfirmationModal
+        isOpen={showConfirm}
+        title={confirmAction?.title}
+        message={confirmAction?.message}
+        confirmText="Confirm"
+        cancelText="Cancel"
+        isDangerous={confirmAction?.type === "deleteNote"}
+        onConfirm={handleConfirm}
+        onCancel={() => setShowConfirm(false)}
+      />
+    </div>
+  );
+}
     </div>
   );
 }
