@@ -1650,6 +1650,70 @@ textarea::placeholder {
   background-color: var(--color-border);
 }
 
+.note-files {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: var(--spacing-md);
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background);
+}
+
+.note-file-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  color: inherit;
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.note-file-item:hover {
+  background-color: var(--color-surface);
+  transform: translateY(-1px);
+}
+
+.note-file-thumb {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-border);
+}
+
+.note-file-icon {
+  font-size: 1.25rem;
+}
+
+.note-file-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  min-width: 0;
+}
+
+.note-file-size {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.note-file-more {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-md);
+  background-color: var(--color-border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* ===========================
    NOTE LIST
    =========================== */
