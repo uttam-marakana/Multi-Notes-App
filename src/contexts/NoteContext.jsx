@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from "react";
-import { db } from "../firebase/firebase";
+import { db, storage } from "../firebase/firebase";
 import {
   collection,
   onSnapshot,
@@ -11,6 +11,12 @@ import {
   orderBy,
   getDocs,
 } from "firebase/firestore";
+import {
+  ref as storageRef,
+  uploadBytesResumable,
+  getDownloadURL,
+  deleteObject,
+} from "firebase/storage";
 import { useAuth } from "./AuthContext";
 import { hashPIN } from "../utils/helpers";
 
@@ -24,6 +30,45 @@ export function NoteProvider({ children }) {
   const { currentUser } = useAuth();
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  const uploadFiles = async (boardId, files) => {
+    if (!currentUser || !files?.length) return [];
+
+    const fileArray = Array.from(files).slice(0, 10);
+    const uploadedFiles = await Promise.all(
+      fileArray.map(async (file) => {
+        const safeName = file.name.replace(/\s+/g, "_");
+        const filePath = `${currentUser.uid}/boards/${boardId}/notes/${Date.now()}_${safeName}`;
+        const fileRef = storageRef(storage, filePath);
+
+        const snapshot = await uploadBytesResumable(fileRef, file);
+        const url = await getDownloadURL(snapshot.ref);
+
+        return {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          url,
+          path: snapshot.ref.fullPath,
+          uploadedAt: new Date().toISOString(),
+        };
+      }),
+    );
+
+    return uploadedFiles;
+  };
+
+  const deleteStoredFiles = async (files = []) => {
+    if (!files.length) return;
+
+    const deletePromises = files.map(async (file) => {
+      if (!file?.path) return;
+      const fileRef = storageRef(storage, file.path);
+      return deleteObject(fileRef).catch(() => null);
+    });
+
+    return Promise.all(deletePromises);
+  };
 
   const fetchNotes = (boardId) => {
     if (!currentUser || !boardId) {
@@ -64,6 +109,10 @@ export function NoteProvider({ children }) {
   const addNote = async (boardId, noteData) => {
     if (!boardId || !currentUser) throw new Error("Invalid board or user");
 
+    const uploadedFiles = noteData.files
+      ? await uploadFiles(boardId, noteData.files)
+      : [];
+
     const newNote = {
       title: noteData.title || "Untitled Note",
       content: noteData.content || "",
@@ -72,7 +121,8 @@ export function NoteProvider({ children }) {
       isProtected: noteData.isProtected || false,
       pin: noteData.pin ? hashPIN(noteData.pin) : null,
       contentType: noteData.contentType || ["text"],
-      files: noteData.files || [],
+      files: uploadedFiles,
+      ownerId: currentUser.uid,
       order: notes.length,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -110,6 +160,9 @@ export function NoteProvider({ children }) {
     if (!boardId || !noteId || !currentUser)
       throw new Error("Invalid parameters");
 
+    const note = notes.find((n) => n.id === noteId);
+    if (!note) throw new Error("Note not found");
+
     const noteRef = doc(
       db,
       "users",
@@ -120,12 +173,36 @@ export function NoteProvider({ children }) {
       noteId,
     );
 
+    let mergedFiles = note.files || [];
+
+    if (updates.removeFiles?.length) {
+      const removedFiles = mergedFiles.filter((file) =>
+        updates.removeFiles.includes(file.path || file.url),
+      );
+      await deleteStoredFiles(removedFiles);
+      mergedFiles = mergedFiles.filter(
+        (file) => !updates.removeFiles.includes(file.path || file.url),
+      );
+    }
+
+    if (updates.newFiles?.length) {
+      const uploadedFiles = await uploadFiles(boardId, updates.newFiles);
+      mergedFiles = [...mergedFiles, ...uploadedFiles];
+    }
+
+    if (Array.isArray(updates.files)) {
+      mergedFiles = updates.files;
+    }
+
     const updateData = {
       ...updates,
+      files: mergedFiles,
       updatedAt: new Date().toISOString(),
     };
 
-    // Hash PIN if it's being updated
+    delete updateData.newFiles;
+    delete updateData.removeFiles;
+
     if (updates.pin && typeof updates.pin === "string") {
       updateData.pin = hashPIN(updates.pin);
     }
