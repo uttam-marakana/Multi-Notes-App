@@ -1,9 +1,13 @@
 import React, { useRef, useState } from "react";
+import { Navigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
+import { useAuth } from "../contexts/AuthContext";
 import { useBoard } from "../contexts/BoardContext";
 import { useTheme } from "../contexts/ThemeContext";
 
 export default function AddBoard({ onSuccess }) {
+  const { currentUser } = useAuth();
+  const location = useLocation();
   const nameRef = useRef();
   const descriptionRef = useRef();
   const [selectedColor, setSelectedColor] = useState("#3B82F6");
@@ -14,6 +18,17 @@ export default function AddBoard({ onSuccess }) {
   const [loading, setLoading] = useState(false);
   const { addBoard } = useBoard();
   const { colors, boardColorPalette } = useTheme();
+
+  if (!currentUser) {
+    return (
+      <Navigate
+        to={`/login?redirect=${encodeURIComponent(
+          location.pathname + location.search,
+        )}`}
+        replace
+      />
+    );
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();

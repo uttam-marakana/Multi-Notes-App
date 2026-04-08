@@ -1,15 +1,34 @@
 import React, { useRef, useState } from "react";
+import {
+  Navigate,
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 import toast from "react-hot-toast";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import { useNote } from "../contexts/NoteContext";
 import { useTheme } from "../contexts/ThemeContext";
 
 export default function AddNote() {
+  const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const boardId = searchParams.get("boardId");
   const { addNote } = useNote();
   const { colors, priorityColors } = useTheme();
+
+  if (!currentUser) {
+    return (
+      <Navigate
+        to={`/login?redirect=${encodeURIComponent(
+          location.pathname + location.search,
+        )}`}
+        replace
+      />
+    );
+  }
 
   const titleRef = useRef();
   const contentRef = useRef();

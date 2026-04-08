@@ -1,6 +1,13 @@
 import React, { useRef, useState, useEffect } from "react";
-import { useParams, useSearchParams, useNavigate } from "react-router-dom";
+import {
+  Navigate,
+  useLocation,
+  useParams,
+  useSearchParams,
+  useNavigate,
+} from "react-router-dom";
 import toast from "react-hot-toast";
+import { useAuth } from "../contexts/AuthContext";
 import { useNote } from "../contexts/NoteContext";
 import { useTheme } from "../contexts/ThemeContext";
 
@@ -9,8 +16,21 @@ export default function NoteEdit() {
   const [searchParams] = useSearchParams();
   const boardId = searchParams.get("boardId");
   const navigate = useNavigate();
+  const location = useLocation();
+  const { currentUser } = useAuth();
   const { notes, updateNote } = useNote();
   const { colors, priorityColors } = useTheme();
+
+  if (!currentUser) {
+    return (
+      <Navigate
+        to={`/login?redirect=${encodeURIComponent(
+          location.pathname + location.search,
+        )}`}
+        replace
+      />
+    );
+  }
 
   const titleRef = useRef();
   const contentRef = useRef();
