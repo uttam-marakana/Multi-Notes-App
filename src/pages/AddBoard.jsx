@@ -64,7 +64,7 @@ export default function AddBoard({ onSuccess }) {
 
   return (
     <div
-      className="add-board-container"
+      className="add-board-container glass-card"
       style={{
         backgroundColor: colors.surface,
         borderColor: colors.border,

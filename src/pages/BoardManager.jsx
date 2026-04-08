@@ -119,8 +119,8 @@ export default function BoardManager() {
   };
 
   return (
-    <div className="board-manager">
-      <div className="board-manager-header">
+    <div className="board-manager glass-container">
+      <div className="board-manager-header glass-card">
         <h2 style={{ color: colors.text, margin: 0 }}>📊 Your Boards</h2>
         <button
           className="btn btn-primary"
@@ -158,7 +158,7 @@ export default function BoardManager() {
 
       {!loading && displayBoards.length === 0 && (
         <div
-          className="empty-state"
+          className="empty-state glass-card"
           style={{
             backgroundColor: colors.surface,
             borderColor: colors.border,

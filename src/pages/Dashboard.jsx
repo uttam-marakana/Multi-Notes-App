@@ -29,9 +29,12 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="dashboard" style={{ backgroundColor: colors.background }}>
+    <div
+      className="dashboard glass-container"
+      style={{ backgroundColor: colors.background }}
+    >
       <div
-        className="dashboard-header"
+        className="dashboard-header glass-card"
         style={{
           backgroundColor: colors.surface,
           borderBottomColor: colors.border,
