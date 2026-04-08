@@ -4,10 +4,12 @@ import { useTheme } from "../contexts/ThemeContext";
 import { useNavigate } from "react-router-dom";
 import ThemeToggle from "../components/ThemeToggle";
 import BoardManager from "./BoardManager";
+import lightLogo from "../assets/images/primary_light_logo.png";
+import darkLogo from "../assets/images/primary_dark_logo.png";
 
 const Dashboard = () => {
   const { currentUser, logout } = useAuth();
-  const { colors } = useTheme();
+  const { theme, colors } = useTheme();
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
@@ -42,9 +44,26 @@ const Dashboard = () => {
       >
         <div className="dashboard-header-content">
           <div className="dashboard-brand">
-            <h1 className="dashboard-title" style={{ color: colors.text }}>
-              📔 Multi-Notes
-            </h1>
+            <img
+              src={theme === "dark" ? lightLogo : darkLogo}
+              alt="Multi-Notes Logo"
+              className="dashboard-logo"
+              style={{ maxHeight: 50, marginRight: "0.75rem" }}
+            />
+            <div>
+              <h1 className="dashboard-title" style={{ color: colors.text }}>
+                📔 Multi-Notes
+              </h1>
+              <p
+                style={{
+                  color: colors.textMuted,
+                  margin: 0,
+                  fontSize: "0.95rem",
+                }}
+              >
+                Smart notes in light and dark mode
+              </p>
+            </div>
           </div>
 
           {currentUser && (
