@@ -8,6 +8,7 @@ import { guestStorage } from "../utils/guestStorage";
 import ConfirmationModal from "../components/ConfirmationModal";
 import AddBoard from "./AddBoard";
 import BoardList from "../components/boards/BoardList";
+import { MdOutlineAddCircleOutline } from "react-icons/md";
 
 export default function BoardManager() {
   const { currentUser } = useAuth();
@@ -127,7 +128,8 @@ export default function BoardManager() {
           onClick={handleCreateBoard}
           style={{ whiteSpace: "nowrap" }}
         >
-          ➕ New Board
+          <MdOutlineAddCircleOutline />
+          New Board
         </button>
       </div>
 
