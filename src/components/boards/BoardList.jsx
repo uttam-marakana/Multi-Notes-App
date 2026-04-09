@@ -1,13 +1,16 @@
 import React from "react";
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import { Droppable, Draggable } from "react-beautiful-dnd";
 import { useTheme } from "../../contexts/ThemeContext";
 import BoardCard from "./BoardCard";
 
-const BoardList = ({ boards, onDelete, onPin, onReorder }) => {
+const BoardList = ({ boards, onDelete, onPin }) => {
   const { colors } = useTheme();
 
   const currentUserId = localStorage.getItem("userId");
 
+  /* ===========================
+     SPLIT BOARDS
+  =========================== */
   const pinnedBoards = boards.filter((b) =>
     b.pinnedBy?.includes(currentUserId),
   );
@@ -16,58 +19,48 @@ const BoardList = ({ boards, onDelete, onPin, onReorder }) => {
     (b) => !b.pinnedBy?.includes(currentUserId),
   );
 
-  const handleDragEnd = (result) => {
-    const { source, destination } = result;
-
-    if (!destination) return;
-
-    if (source.index === destination.index) return;
-
-    // ✅ ONLY reorder UNPINNED boards
-    const reordered = Array.from(unpinnedBoards);
-    const [moved] = reordered.splice(source.index, 1);
-    reordered.splice(destination.index, 0, moved);
-
-    if (onReorder) {
-      onReorder(reordered.map((b) => b.id));
-    }
-  };
-
   return (
     <div className="board-list-container">
-      {/* ⭐ PINNED */}
+      {/* ⭐ PINNED BOARDS */}
       {pinnedBoards.length > 0 && (
         <div className="board-section">
           <h3 style={{ color: colors.text }}>⭐ Pinned Boards</h3>
+
           <div className="board-grid">
-            {pinnedBoards.map((board) => (
-              <BoardCard
-                key={board.id}
-                board={board}
-                onDelete={onDelete}
-                onPin={onPin}
-              />
-            ))}
+            {pinnedBoards.map((board) => {
+              if (!board?.id) return null;
+
+              return (
+                <BoardCard
+                  key={board.id}
+                  board={board}
+                  onDelete={onDelete}
+                  onPin={onPin}
+                />
+              );
+            })}
           </div>
         </div>
       )}
 
-      {/* 📦 ALL BOARDS */}
+      {/* 📦 DRAGGABLE BOARDS */}
       <div className="board-section">
         <h3 style={{ color: colors.text }}>Your Boards</h3>
 
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <Droppable droppableId="boards" direction="horizontal">
-            {(provided) => (
-              <div
-                className="board-grid"
-                ref={provided.innerRef}
-                {...provided.droppableProps}
-              >
-                {unpinnedBoards.map((board, index) => (
+        <Droppable droppableId="boards" direction="horizontal">
+          {(provided) => (
+            <div
+              className="board-grid"
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+            >
+              {unpinnedBoards.map((board, index) => {
+                if (!board?.id) return null;
+
+                return (
                   <Draggable
                     key={board.id}
-                    draggableId={board.id}
+                    draggableId={String(board.id)} // ✅ CRITICAL FIX
                     index={index}
                   >
                     {(provided, snapshot) => (
@@ -85,13 +78,13 @@ const BoardList = ({ boards, onDelete, onPin, onReorder }) => {
                       </div>
                     )}
                   </Draggable>
-                ))}
+                );
+              })}
 
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
       </div>
     </div>
   );
