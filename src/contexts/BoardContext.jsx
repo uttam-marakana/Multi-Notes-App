@@ -27,8 +27,7 @@ export function BoardProvider({ children }) {
   const [boards, setBoards] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  /* ===========================
-     🔄 REAL-TIME LISTENER
+  /* ------ 🔄 REAL-TIME LISTENER
      =========================== */
   useEffect(() => {
     if (!currentUser) {
@@ -82,8 +81,7 @@ export function BoardProvider({ children }) {
     return unsubscribe;
   }, [currentUser]);
 
-  /* ===========================
-     ➕ ADD BOARD
+  /* ------ ➕ ADD BOARD
      =========================== */
   const addBoard = async (boardData) => {
     if (!currentUser) throw new Error("User not authenticated");
@@ -105,16 +103,14 @@ export function BoardProvider({ children }) {
     return docRef.id; // ✅ use this everywhere
   };
 
-  /* ===========================
-     ❌ DELETE BOARD
+  /* ------ ❌ DELETE BOARD
      =========================== */
   const deleteBoard = async (id) => {
     if (!currentUser) throw new Error("User not authenticated");
     await deleteDoc(doc(db, "boards", id));
   };
 
-  /* ===========================
-     ✏️ UPDATE BOARD
+  /* ------ ✏️ UPDATE BOARD
      =========================== */
   const updateBoard = async (id, updates) => {
     if (!currentUser) throw new Error("User not authenticated");
@@ -137,8 +133,7 @@ export function BoardProvider({ children }) {
     await updateBoard(id, { name: newName });
   };
 
-  /* ===========================
-     📌 PIN TOGGLE
+  /* ------ 📌 PIN TOGGLE
      =========================== */
   const toggleBoardPin = async (boardId) => {
     if (!currentUser) return;
@@ -156,16 +151,14 @@ export function BoardProvider({ children }) {
     await updateBoard(boardId, { pinnedBy: updatedPinnedBy });
   };
 
-  /* ===========================
-     📊 HELPERS
+  /* ------ 📊 HELPERS
      =========================== */
   const getBoardCount = () => boards.length;
 
   const getPinnedBoards = () =>
     boards.filter((b) => b.pinnedBy?.includes(currentUser.uid));
 
-  /* ===========================
-     📦 ONE-TIME FETCH
+  /* ------ 📦 ONE-TIME FETCH
      =========================== */
   const getBoards = async () => {
     if (!currentUser) return [];

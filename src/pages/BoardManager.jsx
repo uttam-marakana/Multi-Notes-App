@@ -24,9 +24,7 @@ export default function BoardManager() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
 
-  /* ===========================
-     LOAD GUEST DATA
-  =========================== */
+  /* ------ LOAD GUEST DATA ----------------------------- */
   useEffect(() => {
     if (!currentUser) {
       const saved = guestStorage.getBoards();
@@ -36,9 +34,7 @@ export default function BoardManager() {
 
   const displayBoards = currentUser ? boards : guestBoards;
 
-  /* ===========================
-     DELETE
-  =========================== */
+  /* ------ DELETE ----------------------------- */
   const handleDelete = (boardId) => {
     setConfirmAction({
       type: "delete",
@@ -66,9 +62,7 @@ export default function BoardManager() {
     }
   };
 
-  /* ===========================
-     PIN
-  =========================== */
+  /* ------ PIN ----------------------------- */
   const handlePin = (boardId) => {
     if (!currentUser) {
       toast.error("Please login to pin boards");
@@ -94,9 +88,7 @@ export default function BoardManager() {
     }
   };
 
-  /* ===========================
-     REORDER
-  =========================== */
+  /* ------ REORDER ----------------------------- */
   const handleReorder = useCallback(
     async (boardIds) => {
       if (!currentUser) {
@@ -118,9 +110,7 @@ export default function BoardManager() {
     [currentUser, guestBoards, updateBoardOrder],
   );
 
-  /* ===========================
-     DRAG END (CORE FIX)
-  =========================== */
+  /* ------ DRAG END (CORE FIX) ----------------------------- */
   const handleDragEnd = useCallback(
     (result) => {
       const { source, destination } = result;
@@ -142,9 +132,7 @@ export default function BoardManager() {
     [displayBoards, currentUser, handleReorder],
   );
 
-  /* ===========================
-     CREATE BOARD
-  =========================== */
+  /* ------ CREATE BOARD ----------------------------- */
   const handleCreateBoard = () => {
     if (!currentUser) {
       toast.error("Please login to save boards permanently");
@@ -154,9 +142,7 @@ export default function BoardManager() {
     setIsCreating(true);
   };
 
-  /* ===========================
-     CONFIRM MODAL
-  =========================== */
+  /* ------ CONFIRM MODAL ----------------------------- */
   const handleConfirm = () => {
     setShowConfirm(false);
 
@@ -167,9 +153,7 @@ export default function BoardManager() {
     }
   };
 
-  /* ===========================
-     UI
-  =========================== */
+  /* ------ UI ----------------------------- */
   return (
     <div className="board-manager glass-container">
       {/* HEADER */}
