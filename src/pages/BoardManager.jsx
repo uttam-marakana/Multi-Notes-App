@@ -121,7 +121,7 @@ export default function BoardManager() {
   return (
     <div className="board-manager glass-container">
       <div className="board-manager-header glass-card">
-        <h2 style={{ color: colors.text, margin: 0 }}>📊 Your Boards</h2>
+        <h2 style={{ color: colors.text, margin: 0 }}>Create Boards</h2>
         <button
           className="btn btn-primary"
           onClick={handleCreateBoard}
@@ -168,7 +168,7 @@ export default function BoardManager() {
           }}
         >
           <h3 style={{ color: colors.text, fontSize: "1.5rem" }}>
-            📋 No Boards Yet
+            No Boards Yet
           </h3>
           <p style={{ color: colors.textMuted, marginBottom: "1.5rem" }}>
             {currentUser

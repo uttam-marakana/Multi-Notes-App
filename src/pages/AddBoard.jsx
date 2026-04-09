@@ -1,23 +1,43 @@
-import React, { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAuth } from "../contexts/AuthContext";
 import { useBoard } from "../contexts/BoardContext";
 import { useTheme } from "../contexts/ThemeContext";
+import { TiArrowSortedDown, TiArrowSortedUp } from "react-icons/ti";
+import PinInput from "../components/PinInput";
 
 export default function AddBoard({ onSuccess }) {
   const { currentUser } = useAuth();
   const location = useLocation();
+
   const nameRef = useRef();
-  const descriptionRef = useRef();
+
+  const [name, setName] = useState("");
+  const [desc, setDesc] = useState("");
   const [selectedColor, setSelectedColor] = useState("#3B82F6");
+
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isProtected, setIsProtected] = useState(false);
+
   const [pin, setPin] = useState("");
   const [pinConfirm, setPinConfirm] = useState("");
+  const [pinError, setPinError] = useState(false);
+
   const [loading, setLoading] = useState(false);
+
   const { addBoard } = useBoard();
   const { colors, boardColorPalette } = useTheme();
+
+  useEffect(() => {
+    nameRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    if (pinError && pin === pinConfirm) {
+      setPinError(false);
+    }
+  }, [pin, pinConfirm]);
 
   if (!currentUser) {
     return (
@@ -30,251 +50,145 @@ export default function AddBoard({ onSuccess }) {
     );
   }
 
+  const isValid =
+    name.trim() && (!isProtected || (pin.length === 4 && pin === pinConfirm));
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const name = nameRef.current.value.trim();
 
-    if (!name) {
+    if (!name.trim()) {
       toast.error("Board name is required");
       return;
     }
 
     if (isProtected) {
       if (pin.length !== 4) {
-        toast.error("PIN must be exactly 4 digits");
+        setPinError(true);
+        toast.error("PIN must be 4 digits");
         return;
       }
       if (pin !== pinConfirm) {
-        toast.error("PINs do not match");
+        setPinError(true);
+        toast.error("PIN mismatch");
         return;
       }
     }
 
     setLoading(true);
+
     try {
       await addBoard({
-        name,
-        description: descriptionRef.current.value.trim(),
+        name: name.trim(),
+        description: desc.trim(),
         color: selectedColor,
         isProtected,
         pin: isProtected ? pin : null,
       });
 
-      toast.success("Board created successfully!");
-      nameRef.current.value = "";
-      descriptionRef.current.value = "";
+      toast.success("Board created!");
+
+      setName("");
+      setDesc("");
       setSelectedColor("#3B82F6");
       setIsProtected(false);
       setPin("");
       setPinConfirm("");
       setShowAdvanced(false);
 
-      if (onSuccess) onSuccess();
-    } catch (error) {
-      toast.error(error.message || "Failed to create board");
+      nameRef.current?.focus();
+      onSuccess?.();
+    } catch (err) {
+      toast.error(err.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div
-      className="add-board-container glass-card"
-      style={{
-        backgroundColor: colors.surface,
-        borderColor: colors.border,
-      }}
-    >
-      <h3 style={{ color: colors.text, marginBottom: "1.5rem" }}>
-        ✨ Create New Board
-      </h3>
+    <div className="add-board-wrapper">
+      <div className="add-board-container glass-card">
+        <h3>✨ Create New Board</h3>
 
-      <form onSubmit={handleSubmit} className="add-board-form">
-        {/* Basic Fields */}
-        <div className="form-group">
-          <label style={{ color: colors.text }}>Board Name *</label>
-          <input
-            ref={nameRef}
-            type="text"
-            placeholder="Enter board name (e.g., 'Project Ideas', 'Daily Notes')"
-            required
-            maxLength="100"
-            style={{
-              backgroundColor: colors.background,
-              borderColor: colors.border,
-              color: colors.text,
-            }}
-          />
-        </div>
-
-        <div className="form-group">
-          <label style={{ color: colors.text }}>Description</label>
-          <textarea
-            ref={descriptionRef}
-            placeholder="Add a description for this board (optional)"
-            maxLength="200"
-            rows="2"
-            style={{
-              backgroundColor: colors.background,
-              borderColor: colors.border,
-              color: colors.text,
-            }}
-          />
-          <small style={{ color: colors.textMuted }}>
-            {descriptionRef.current?.value?.length || 0}/200
-          </small>
-        </div>
-
-        {/* Color Selection */}
-        <div className="form-group">
-          <label style={{ color: colors.text }}>Board Color</label>
-          <div className="color-picker">
-            {boardColorPalette.map((color) => (
-              <button
-                key={color}
-                type="button"
-                className={`color-option ${
-                  selectedColor === color ? "selected" : ""
-                }`}
-                style={{
-                  backgroundColor: color,
-                  borderColor:
-                    selectedColor === color ? colors.text : "transparent",
-                }}
-                onClick={() => setSelectedColor(color)}
-                title={color}
-              />
-            ))}
+        <form onSubmit={handleSubmit} className="add-board-form">
+          <div className="form-group">
+            <label>Board Name *</label>
+            <input
+              ref={nameRef}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
           </div>
-        </div>
 
-        {/* Advanced Options */}
-        <div className="advanced-toggle">
-          <button
-            type="button"
-            className="btn btn-ghost btn-sm"
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            style={{ color: colors.primary }}
-          >
-            {showAdvanced ? "▼" : "▶"} Advanced Options
-          </button>
-        </div>
+          <div className="form-group">
+            <label>Description</label>
+            <textarea value={desc} onChange={(e) => setDesc(e.target.value)} />
+          </div>
 
-        {showAdvanced && (
-          <div className="advanced-options">
-            <div
-              className="form-group"
-              style={{
-                padding: "1rem",
-                backgroundColor: colors.background,
-                borderRadius: "0.5rem",
-                border: `1px solid ${colors.border}`,
-              }}
-            >
-              <label
-                style={{
-                  color: colors.text,
-                  display: "flex",
-                  gap: "0.5rem",
-                  alignItems: "center",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={isProtected}
-                  onChange={(e) => setIsProtected(e.target.checked)}
-                  style={{ cursor: "pointer" }}
+          <div className="form-group">
+            <label>Board Color</label>
+            <div className="color-picker">
+              {boardColorPalette.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  className={`color-option ${
+                    selectedColor === c ? "selected" : ""
+                  }`}
+                  style={{ backgroundColor: c }}
+                  onClick={() => setSelectedColor(c)}
                 />
-                🔒 Protect with PIN
-              </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="advanced-toggle">
+            <button
+              type="button"
+              onClick={() => setShowAdvanced(!showAdvanced)}
+            >
+              {showAdvanced ? <TiArrowSortedDown /> : <TiArrowSortedUp />}{" "}
+              Advanced
+            </button>
+          </div>
+
+          {showAdvanced && (
+            <div className="advanced-box active">
+              <div onClick={() => setIsProtected((p) => !p)}>
+                🔒 Protect Board ({isProtected ? "On" : "Off"})
+              </div>
 
               {isProtected && (
-                <div
-                  style={{
-                    marginTop: "1rem",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "0.75rem",
-                  }}
-                >
-                  <div>
-                    <label
-                      style={{
-                        color: colors.text,
-                        display: "block",
-                        marginBottom: "0.5rem",
-                      }}
-                    >
-                      PIN (4 digits)
-                    </label>
-                    <input
-                      type="password"
-                      placeholder="Enter 4-digit PIN"
-                      maxLength="4"
-                      value={pin}
-                      onChange={(e) =>
-                        setPin(
-                          e.target.value.replace(/[^0-9]/g, "").slice(0, 4),
-                        )
-                      }
-                      style={{
-                        backgroundColor: colors.background,
-                        borderColor: colors.border,
-                        color: colors.text,
-                      }}
-                    />
-                  </div>
+                <div className={`pin-group ${pinError ? "pin-error" : ""}`}>
+                  <PinInput
+                    label="Create PIN"
+                    value={pin}
+                    setValue={setPin}
+                    autoFocus
+                  />
 
-                  <div>
-                    <label
-                      style={{
-                        color: colors.text,
-                        display: "block",
-                        marginBottom: "0.5rem",
-                      }}
-                    >
-                      Confirm PIN
-                    </label>
-                    <input
-                      type="password"
-                      placeholder="Confirm 4-digit PIN"
-                      maxLength="4"
-                      value={pinConfirm}
-                      onChange={(e) =>
-                        setPinConfirm(
-                          e.target.value.replace(/[^0-9]/g, "").slice(0, 4),
-                        )
-                      }
-                      style={{
-                        backgroundColor: colors.background,
-                        borderColor: colors.border,
-                        color: colors.text,
-                      }}
-                    />
-                  </div>
+                  <PinInput
+                    label="Confirm PIN"
+                    value={pinConfirm}
+                    setValue={setPinConfirm}
+                  />
+
+                  {pin && pinConfirm && pin === pinConfirm && (
+                    <div className="pin-success">✅ PIN matched</div>
+                  )}
 
                   {pin && pinConfirm && pin !== pinConfirm && (
-                    <small style={{ color: colors.danger }}>
-                      ⚠️ PINs do not match
-                    </small>
+                    <small className="text-danger">⚠️ PIN mismatch</small>
                   )}
                 </div>
               )}
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Action Buttons */}
-        <div className="form-actions">
-          <button
-            type="submit"
-            className="btn btn-primary btn-lg"
-            disabled={loading}
-          >
-            {loading ? "Creating..." : "✨ Create Board"}
+          <button disabled={!isValid || loading}>
+            {loading ? "Creating..." : "Create Board"}
           </button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }
