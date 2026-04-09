@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { useTheme } from "../../contexts/ThemeContext";
 import BoardCard from "./BoardCard";
