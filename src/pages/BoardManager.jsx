@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
@@ -9,19 +9,24 @@ import ConfirmationModal from "../components/ConfirmationModal";
 import AddBoard from "./AddBoard";
 import BoardList from "../components/boards/BoardList";
 import { MdOutlineAddCircleOutline } from "react-icons/md";
+import { DragDropContext } from "react-beautiful-dnd";
 
 export default function BoardManager() {
   const { currentUser } = useAuth();
   const { boards, deleteBoard, updateBoardOrder, toggleBoardPin, loading } =
     useBoard();
+
   const { colors } = useTheme();
   const navigate = useNavigate();
+
   const [isCreating, setIsCreating] = useState(false);
   const [guestBoards, setGuestBoards] = useState([]);
   const [showConfirm, setShowConfirm] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
 
-  // Load guest data
+  /* ===========================
+     LOAD GUEST DATA
+  =========================== */
   useEffect(() => {
     if (!currentUser) {
       const saved = guestStorage.getBoards();
@@ -31,7 +36,10 @@ export default function BoardManager() {
 
   const displayBoards = currentUser ? boards : guestBoards;
 
-  const handleDelete = async (boardId) => {
+  /* ===========================
+     DELETE
+  =========================== */
+  const handleDelete = (boardId) => {
     setConfirmAction({
       type: "delete",
       boardId,
@@ -46,7 +54,7 @@ export default function BoardManager() {
       const updated = guestBoards.filter((b) => b.id !== boardId);
       setGuestBoards(updated);
       guestStorage.saveBoards(updated);
-      toast.success("Board deleted (temporary data)");
+      toast.success("Board deleted (guest mode)");
       return;
     }
 
@@ -58,7 +66,10 @@ export default function BoardManager() {
     }
   };
 
-  const handlePin = async (boardId) => {
+  /* ===========================
+     PIN
+  =========================== */
+  const handlePin = (boardId) => {
     if (!currentUser) {
       toast.error("Please login to pin boards");
       navigate("/login?redirect=/dashboard");
@@ -78,29 +89,62 @@ export default function BoardManager() {
     try {
       await toggleBoardPin(boardId);
       toast.success("Board updated!");
-    } catch (error) {
+    } catch {
       toast.error("Failed to pin board.");
     }
   };
 
-  const handleReorder = async (boardIds) => {
-    if (!currentUser) {
-      const reordered = boardIds.map((id) =>
-        guestBoards.find((b) => b.id === id),
+  /* ===========================
+     REORDER
+  =========================== */
+  const handleReorder = useCallback(
+    async (boardIds) => {
+      if (!currentUser) {
+        const reordered = boardIds.map((id) =>
+          guestBoards.find((b) => b.id === id),
+        );
+        setGuestBoards(reordered);
+        guestStorage.saveBoards(reordered);
+        return;
+      }
+
+      try {
+        await updateBoardOrder(boardIds);
+        toast.success("Boards reordered!");
+      } catch {
+        toast.error("Failed to reorder boards.");
+      }
+    },
+    [currentUser, guestBoards, updateBoardOrder],
+  );
+
+  /* ===========================
+     DRAG END (CORE FIX)
+  =========================== */
+  const handleDragEnd = useCallback(
+    (result) => {
+      const { source, destination } = result;
+
+      if (!destination) return;
+      if (source.index === destination.index) return;
+
+      // 🔥 Only reorder unpinned boards
+      const unpinned = displayBoards.filter(
+        (b) => !b.pinnedBy?.includes(currentUser?.uid),
       );
-      setGuestBoards(reordered);
-      guestStorage.saveBoards(reordered);
-      return;
-    }
 
-    try {
-      await updateBoardOrder(boardIds);
-      toast.success("Boards reordered!");
-    } catch (error) {
-      toast.error("Failed to reorder boards.");
-    }
-  };
+      const reordered = Array.from(unpinned);
+      const [moved] = reordered.splice(source.index, 1);
+      reordered.splice(destination.index, 0, moved);
 
+      handleReorder(reordered.map((b) => b.id));
+    },
+    [displayBoards, currentUser, handleReorder],
+  );
+
+  /* ===========================
+     CREATE BOARD
+  =========================== */
   const handleCreateBoard = () => {
     if (!currentUser) {
       toast.error("Please login to save boards permanently");
@@ -110,82 +154,73 @@ export default function BoardManager() {
     setIsCreating(true);
   };
 
+  /* ===========================
+     CONFIRM MODAL
+  =========================== */
   const handleConfirm = () => {
     setShowConfirm(false);
-    if (confirmAction.type === "delete") {
+
+    if (confirmAction?.type === "delete") {
       executeDelete(confirmAction.boardId);
-    } else if (confirmAction.type === "pin") {
+    } else if (confirmAction?.type === "pin") {
       executePin(confirmAction.boardId);
     }
   };
 
+  /* ===========================
+     UI
+  =========================== */
   return (
     <div className="board-manager glass-container">
+      {/* HEADER */}
       <div className="board-manager-header glass-card">
-        <h2 style={{ color: colors.text, margin: 0 }}>Create Boards</h2>
-        <button
-          className="btn btn-primary"
-          onClick={handleCreateBoard}
-          style={{ whiteSpace: "nowrap" }}
-        >
+        <h2 style={{ color: colors.text }}>Create Boards</h2>
+
+        <button className="btn btn-primary" onClick={handleCreateBoard}>
           <MdOutlineAddCircleOutline />
           New Board
         </button>
       </div>
 
+      {/* CREATE FORM */}
       {isCreating && <AddBoard onSuccess={() => setIsCreating(false)} />}
 
+      {/* LOADING */}
       {loading && (
-        <div
-          className="loading-state"
-          style={{
-            color: colors.textMuted,
-            textAlign: "center",
-            padding: "2rem",
-          }}
-        >
+        <div className="loading-state">
           <div className="spinner"></div>
           <p>Loading boards...</p>
         </div>
       )}
 
+      {/* BOARDS */}
       {!loading && displayBoards.length > 0 && (
-        <BoardList
-          boards={displayBoards}
-          onDelete={handleDelete}
-          onPin={handlePin}
-          onReorder={handleReorder}
-        />
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <BoardList
+            boards={displayBoards}
+            onDelete={handleDelete}
+            onPin={handlePin}
+          />
+        </DragDropContext>
       )}
 
+      {/* EMPTY STATE */}
       {!loading && displayBoards.length === 0 && (
-        <div
-          className="empty-state glass-card"
-          style={{
-            backgroundColor: colors.surface,
-            borderColor: colors.border,
-            padding: "3rem",
-            borderRadius: "1rem",
-            textAlign: "center",
-          }}
-        >
-          <h3 style={{ color: colors.text, fontSize: "1.5rem" }}>
-            No Boards Yet
-          </h3>
-          <p style={{ color: colors.textMuted, marginBottom: "1.5rem" }}>
+        <div className="empty-state glass-card">
+          <h3>No Boards Yet</h3>
+          <p>
             {currentUser
-              ? "Create your first board to get started organizing your notes!"
-              : "Login to create boards and save them permanently!"}
+              ? "Create your first board to start organizing!"
+              : "Login to create boards!"}
           </p>
-          <button
-            className="btn btn-primary btn-lg"
-            onClick={handleCreateBoard}
-          >
-            {currentUser ? "✨ Create First Board" : "🔑 Login to Create"}
+
+          <button className="btn btn-primary" onClick={handleCreateBoard}>
+            {currentUser ? "✨ Create Board" : "🔑 Login"}
           </button>
         </div>
       )}
 
+      {/* CONFIRM MODAL */}
       <ConfirmationModal
         isOpen={showConfirm}
         title={confirmAction?.title}
