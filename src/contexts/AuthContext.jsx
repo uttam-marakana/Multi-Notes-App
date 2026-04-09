@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { auth, db } from "../firebase/firebase";
+import { createContext, useContext, useState, useEffect } from "react";
+import { auth, db } from "../config/firebase";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -58,7 +58,7 @@ export function AuthProvider({ children }) {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
-        password
+        password,
       );
       const user = userCredential.user;
 
@@ -81,7 +81,7 @@ export function AuthProvider({ children }) {
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
-        password
+        password,
       );
       return userCredential.user;
     } catch (error) {
