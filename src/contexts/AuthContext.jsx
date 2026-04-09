@@ -1,11 +1,13 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { auth, db } from "../config/firebase";
+
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
 } from "firebase/auth";
+
 import { doc, setDoc, getDoc } from "firebase/firestore";
 
 const AuthContext = createContext();
@@ -18,23 +20,22 @@ export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // ✅ AUTO AUTH STATE SYNC
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setLoading(true);
       try {
         if (user) {
-          const userDocRef = doc(db, "users", user.uid);
-          const userDoc = await getDoc(userDocRef);
+          const docRef = doc(db, "users", user.uid);
+          const docSnap = await getDoc(docRef);
 
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
+          if (docSnap.exists()) {
             setCurrentUser({
               uid: user.uid,
               email: user.email,
-              ...userData,
+              ...docSnap.data(),
             });
           } else {
-            console.warn("User document not found in Firestore.");
+            // fallback (rare case)
             setCurrentUser({
               uid: user.uid,
               email: user.email,
@@ -44,7 +45,7 @@ export function AuthProvider({ children }) {
           setCurrentUser(null);
         }
       } catch (error) {
-        console.error("Error fetching user details:", error.message);
+        console.error("Auth Sync Error:", error.message);
       } finally {
         setLoading(false);
       }
@@ -53,29 +54,35 @@ export function AuthProvider({ children }) {
     return unsubscribe;
   }, []);
 
-  const signUp = async (email, password, userDetails) => {
+  // ✅ SIGNUP
+  const signUp = async (email, password, userDetails = {}) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
         password,
       );
+
       const user = userCredential.user;
 
+      // 🔥 Store in Firestore
       await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
         email: user.email,
         createdAt: new Date().toISOString(),
         ...userDetails,
       });
 
-      console.log("User registered and details saved to Firestore");
-      return user;
+      console.log("User registered + stored in Firestore");
+
+      return userCredential; // ✅ IMPORTANT (fixes your bug)
     } catch (error) {
-      console.error("Error during sign-up:", error.message);
+      console.error("SignUp Error:", error.message);
       throw error;
     }
   };
 
+  // ✅ LOGIN
   const login = async (email, password) => {
     try {
       const userCredential = await signInWithEmailAndPassword(
@@ -83,55 +90,56 @@ export function AuthProvider({ children }) {
         email,
         password,
       );
-      return userCredential.user;
+
+      return userCredential; // ✅ consistent return
     } catch (error) {
-      console.error("Error during login:", error.message);
+      console.error("Login Error:", error.message);
       throw error;
     }
   };
 
+  // ✅ LOGOUT
   const logout = async () => {
     try {
       await signOut(auth);
       setCurrentUser(null);
-      console.log("User logged out");
     } catch (error) {
-      console.error("Error during logout:", error.message);
+      console.error("Logout Error:", error.message);
       throw error;
     }
   };
 
+  // ✅ MANUAL REFRESH (optional but powerful)
   const refreshCurrentUser = async () => {
-    if (auth.currentUser) {
-      try {
-        const userDocRef = doc(db, "users", auth.currentUser.uid);
-        const userDoc = await getDoc(userDocRef);
+    if (!auth.currentUser) return;
 
-        if (userDoc.exists()) {
-          setCurrentUser({
-            ...auth.currentUser,
-            ...userDoc.data(),
-          });
-        } else {
-          setCurrentUser(auth.currentUser);
-        }
-      } catch (error) {
-        console.error("Error refreshing user details:", error.message);
+    try {
+      const docRef = doc(db, "users", auth.currentUser.uid);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        setCurrentUser({
+          uid: auth.currentUser.uid,
+          email: auth.currentUser.email,
+          ...docSnap.data(),
+        });
       }
+    } catch (error) {
+      console.error("Refresh Error:", error.message);
     }
   };
 
+  const value = {
+    currentUser,
+    signUp,
+    login,
+    logout,
+    loading,
+    refreshCurrentUser,
+  };
+
   return (
-    <AuthContext.Provider
-      value={{
-        currentUser,
-        signUp,
-        login,
-        logout,
-        loading,
-        refreshCurrentUser,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {!loading && children}
     </AuthContext.Provider>
   );
