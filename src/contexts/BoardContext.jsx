@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import { db } from "../config/firebase";
 import {
   collection,
@@ -27,7 +27,9 @@ export function BoardProvider({ children }) {
   const [boards, setBoards] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 🔄 REAL-TIME LISTENER
+  /* ===========================
+     🔄 REAL-TIME LISTENER
+     =========================== */
   useEffect(() => {
     if (!currentUser) {
       setBoards([]);
@@ -46,18 +48,26 @@ export function BoardProvider({ children }) {
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        let boardsData = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+        let boardsData = snapshot.docs.map((docSnap) => {
+          const data = docSnap.data();
 
-        // 📌 Sort pinned boards on top (client-side, zero cost)
+          return {
+            id: docSnap.id, // ✅ ONLY source of truth
+            ...data,
+          };
+        });
+
+        /* 🔥 SAFE SORTING (handles null timestamps) */
         boardsData.sort((a, b) => {
           const aPinned = a.pinnedBy?.includes(currentUser.uid);
           const bPinned = b.pinnedBy?.includes(currentUser.uid);
 
-          if (aPinned === bPinned) return 0;
-          return aPinned ? -1 : 1;
+          if (aPinned !== bPinned) return aPinned ? -1 : 1;
+
+          const aTime = a.createdAt?.seconds || 0;
+          const bTime = b.createdAt?.seconds || 0;
+
+          return bTime - aTime;
         });
 
         setBoards(boardsData);
@@ -72,7 +82,9 @@ export function BoardProvider({ children }) {
     return unsubscribe;
   }, [currentUser]);
 
-  // ➕ ADD BOARD
+  /* ===========================
+     ➕ ADD BOARD
+     =========================== */
   const addBoard = async (boardData) => {
     if (!currentUser) throw new Error("User not authenticated");
 
@@ -89,16 +101,21 @@ export function BoardProvider({ children }) {
     };
 
     const docRef = await addDoc(collection(db, "boards"), newBoard);
-    return docRef.id;
+
+    return docRef.id; // ✅ use this everywhere
   };
 
-  // ❌ DELETE BOARD
+  /* ===========================
+     ❌ DELETE BOARD
+     =========================== */
   const deleteBoard = async (id) => {
     if (!currentUser) throw new Error("User not authenticated");
     await deleteDoc(doc(db, "boards", id));
   };
 
-  // ✏️ UPDATE BOARD
+  /* ===========================
+     ✏️ UPDATE BOARD
+     =========================== */
   const updateBoard = async (id, updates) => {
     if (!currentUser) throw new Error("User not authenticated");
 
@@ -109,7 +126,6 @@ export function BoardProvider({ children }) {
       updatedAt: serverTimestamp(),
     };
 
-    // 🔐 Hash PIN safely
     if (updates.pin && typeof updates.pin === "string") {
       updateData.pin = hashPIN(updates.pin);
     }
@@ -121,7 +137,9 @@ export function BoardProvider({ children }) {
     await updateBoard(id, { name: newName });
   };
 
-  // 📌 PIN TOGGLE
+  /* ===========================
+     📌 PIN TOGGLE
+     =========================== */
   const toggleBoardPin = async (boardId) => {
     if (!currentUser) return;
 
@@ -138,13 +156,17 @@ export function BoardProvider({ children }) {
     await updateBoard(boardId, { pinnedBy: updatedPinnedBy });
   };
 
-  // 📊 HELPERS
+  /* ===========================
+     📊 HELPERS
+     =========================== */
   const getBoardCount = () => boards.length;
 
   const getPinnedBoards = () =>
     boards.filter((b) => b.pinnedBy?.includes(currentUser.uid));
 
-  // 📦 ONE-TIME FETCH (same query for consistency)
+  /* ===========================
+     📦 ONE-TIME FETCH
+     =========================== */
   const getBoards = async () => {
     if (!currentUser) return [];
 
@@ -156,18 +178,22 @@ export function BoardProvider({ children }) {
 
     const snapshot = await getDocs(q);
 
-    let boardsData = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
+    let boardsData = snapshot.docs.map((docSnap) => ({
+      id: docSnap.id,
+      ...docSnap.data(),
     }));
 
-    // 📌 Apply same pinned sorting
+    /* 🔥 SAME SORTING LOGIC */
     boardsData.sort((a, b) => {
       const aPinned = a.pinnedBy?.includes(currentUser.uid);
       const bPinned = b.pinnedBy?.includes(currentUser.uid);
 
-      if (aPinned === bPinned) return 0;
-      return aPinned ? -1 : 1;
+      if (aPinned !== bPinned) return aPinned ? -1 : 1;
+
+      const aTime = a.createdAt?.seconds || 0;
+      const bTime = b.createdAt?.seconds || 0;
+
+      return bTime - aTime;
     });
 
     return boardsData;
