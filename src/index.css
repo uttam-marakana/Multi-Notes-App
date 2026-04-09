@@ -1817,7 +1817,7 @@ textarea::placeholder {
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
+  /* gap: var(--spacing-md); */
   position: relative;
   z-index: 1;
 }
@@ -1872,17 +1872,34 @@ textarea::placeholder {
 .password-toggle {
   position: absolute;
   right: var(--spacing-md);
-  background: none;
+  top: 50%;
+  transform: translateY(-50%);
+
+  width: 32px;
+  height: 32px;
+  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  background: transparent;
   border: none;
   cursor: pointer;
+
   font-size: 1.1rem;
   padding: 0;
   transition: all 0.3s ease;
   color: var(--color-text-muted);
+  z-index: 2;
+}
+
+.password-toggle svg {
+  width: 18px;
+  height: 18px;
 }
 
 .password-toggle:hover {
-  transform: scale(1.2);
+  transform: translateY(-50%) scale(1.1);
   color: var(--color-primary);
 }
 
