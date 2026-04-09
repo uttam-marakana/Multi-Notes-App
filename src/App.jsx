@@ -1,6 +1,5 @@
-import React, { Suspense, lazy } from "react";
+import { Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Toaster from "react-hot-toast";
 
 // Import Context Providers
 import { AuthProvider } from "./contexts/AuthContext";
@@ -43,7 +42,7 @@ function App() {
                       <Route path="/signup" element={<SignUp />} />
 
                       {/* Dashboard - Public Access (allows guest browsing) */}
-                      <Route path="/dashboard" element={<Dashboard />} />
+                      <Route path="/" element={<Dashboard />} />
 
                       {/* Protected Routes */}
                       <Route
