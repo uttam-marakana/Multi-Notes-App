@@ -9,12 +9,14 @@ import toast from "react-hot-toast";
 import { useAuth } from "../contexts/AuthContext";
 import { useNote } from "../contexts/NoteContext";
 import { useTheme } from "../contexts/ThemeContext";
+import PinInput from "../components/PinInput";
 
 export default function AddNote() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
+  const [pinError, setPinError] = useState(false);
   const boardId = searchParams.get("boardId");
   const { addNote } = useNote();
   const { colors, priorityColors } = useTheme();
@@ -181,66 +183,58 @@ export default function AddNote() {
               </div>
             </div>
 
+            {/* PROTECTION SYSTEM */}
             <div className="form-group">
-              <label
-                style={{
-                  color: colors.text,
-                  display: "flex",
-                  gap: "0.5rem",
-                  alignItems: "center",
+              <label style={{ color: colors.text }}>Security</label>
+
+              <div
+                className={`advanced-box ${isProtected ? "active" : ""}`}
+                onClick={() => setIsProtected((prev) => !prev)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") setIsProtected((prev) => !prev);
                 }}
               >
-                <input
-                  type="checkbox"
-                  checked={isProtected}
-                  onChange={(e) => setIsProtected(e.target.checked)}
-                />
-                🔒 Protect with PIN
-              </label>
-
-              {isProtected && (
-                <div
-                  style={{
-                    marginTop: "1rem",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "0.75rem",
-                  }}
-                >
-                  <input
-                    type="password"
-                    placeholder="4-digit PIN"
-                    maxLength="4"
-                    value={pin}
-                    onChange={(e) =>
-                      setPin(e.target.value.replace(/[^0-9]/g, ""))
-                    }
-                    style={{
-                      backgroundColor: colors.background,
-                      borderColor: colors.border,
-                      color: colors.text,
-                      padding: "0.5rem",
-                      borderRadius: "0.5rem",
-                    }}
-                  />
-                  <input
-                    type="password"
-                    placeholder="Confirm PIN"
-                    maxLength="4"
-                    value={pinConfirm}
-                    onChange={(e) =>
-                      setPinConfirm(e.target.value.replace(/[^0-9]/g, ""))
-                    }
-                    style={{
-                      backgroundColor: colors.background,
-                      borderColor: colors.border,
-                      color: colors.text,
-                      padding: "0.5rem",
-                      borderRadius: "0.5rem",
-                    }}
-                  />
+                <div className="advanced-header">
+                  <div className="flex items-center gap-2">
+                    🔒 <span>Protect Note</span>
+                  </div>
+                  <div className="advanced-status">
+                    {isProtected ? "Enabled" : "Off"}
+                  </div>
                 </div>
-              )}
+
+                <div
+                  className={`pin-wrapper ${isProtected ? "open" : ""}`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {isProtected && (
+                    <div className={`pin-group ${pinError ? "pin-error" : ""}`}>
+                      <PinInput
+                        label="Create PIN"
+                        value={pin}
+                        setValue={setPin}
+                        autoFocus
+                      />
+
+                      <PinInput
+                        label="Confirm PIN"
+                        value={pinConfirm}
+                        setValue={setPinConfirm}
+                      />
+
+                      {pin && pinConfirm && pin === pinConfirm && (
+                        <div className="pin-success">✅ PIN matched</div>
+                      )}
+
+                      {pin && pinConfirm && pin !== pinConfirm && (
+                        <small className="text-danger">⚠️ PIN mismatch</small>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div className="form-group">
