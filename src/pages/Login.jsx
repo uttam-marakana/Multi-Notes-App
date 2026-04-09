@@ -4,7 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import ThemeToggle from "../components/ThemeToggle";
-import { FiEye, FiEyeOff } from "react-icons/fi";
+import { RiEye2Line, RiEyeCloseFill } from "react-icons/ri";
 
 export default function Login() {
   const emailRef = useRef();
@@ -115,7 +115,7 @@ export default function Login() {
                   onClick={() => setShowPassword((prev) => !prev)}
                   aria-label="Toggle password visibility"
                 >
-                  {showPassword ? <FiEyeOff /> : <FiEye />}
+                  {showPassword ? <RiEyeCloseFill /> : <RiEye2Line />}
                 </button>
               </div>
             </div>

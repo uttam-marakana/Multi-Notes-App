@@ -4,7 +4,10 @@ import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { Link, useNavigate } from "react-router-dom";
 import ThemeToggle from "../components/ThemeToggle";
-import { FiEye, FiEyeOff } from "react-icons/fi";
+import { RiEye2Line, RiEyeCloseFill } from "react-icons/ri";
+
+import { db } from "../config/firebase";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 export default function SignUp() {
   const navigate = useNavigate();
@@ -28,35 +31,41 @@ export default function SignUp() {
     const password = passwordRef.current.value;
     const confirmPassword = confirmPasswordRef.current.value;
 
+    // ✅ Validation
     if (!name || !email || !password || !confirmPassword) {
-      toast.error("Please fill in all fields");
-      return;
+      return toast.error("Please fill in all fields");
     }
 
     if (password.length < 6) {
-      toast.error("Password must be at least 6 characters long");
-      return;
+      return toast.error("Password must be at least 6 characters");
     }
 
     if (password !== confirmPassword) {
-      toast.error("Passwords do not match");
-      return;
+      return toast.error("Passwords do not match");
     }
 
     setLoading(true);
+
     try {
-      await signUp(email, password, {
-        displayName: name,
-        email: email,
-        createdAt: new Date().toISOString(),
+      // 🔐 Firebase Auth (ONLY email + password)
+      const userCredential = await signUp(email, password);
+      const user = userCredential.user;
+
+      // 🗄️ Firestore (store extra user data)
+      await setDoc(doc(db, "Register_Users", user.uid), {
+        uid: user.uid,
+        name,
+        email,
+        createdAt: serverTimestamp(),
       });
 
       toast.success("Account created successfully!");
-      setTimeout(() => {
-        navigate("/login");
-      }, 500);
+
+      // 🚀 Redirect to login (clean)
+      navigate("/login", { replace: true });
     } catch (error) {
-      toast.error(error.message || "Failed to create account");
+      console.error(error);
+      toast.error(error.message || "Signup failed");
     } finally {
       setLoading(false);
     }
@@ -83,11 +92,13 @@ export default function SignUp() {
           <h2 className="auth-title" style={{ color: colors.text }}>
             Create Account
           </h2>
+
           <p className="auth-subtitle" style={{ color: colors.textMuted }}>
             Join us and start organizing your notes today
           </p>
 
           <form className="auth-form" onSubmit={handleSubmit}>
+            {/* NAME */}
             <div className="form-group">
               <label style={{ color: colors.text }}>Full Name</label>
               <input
@@ -95,14 +106,10 @@ export default function SignUp() {
                 type="text"
                 placeholder="John Doe"
                 required
-                style={{
-                  backgroundColor: colors.background,
-                  borderColor: colors.border,
-                  color: colors.text,
-                }}
               />
             </div>
 
+            {/* EMAIL */}
             <div className="form-group">
               <label style={{ color: colors.text }}>Email Address</label>
               <input
@@ -110,50 +117,50 @@ export default function SignUp() {
                 type="email"
                 placeholder="you@example.com"
                 required
-                style={{
-                  backgroundColor: colors.background,
-                  borderColor: colors.border,
-                  color: colors.text,
-                }}
               />
             </div>
 
-            <div className="password-input-wrapper">
-              <input
-                ref={passwordRef}
-                type={showPassword ? "text" : "password"}
-                placeholder="Minimum 6 characters"
-                required
-              />
-
-              <button
-                type="button"
-                className="password-toggle"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => setShowPassword((prev) => !prev)}
-              >
-                {showPassword ? <FiEyeOff /> : <FiEye />}
-              </button>
+            {/* PASSWORD */}
+            <div className="form-group">
+              <div className="password-input-wrapper">
+                <input
+                  ref={passwordRef}
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Minimum 6 characters"
+                  required
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => setShowPassword((p) => !p)}
+                >
+                  {showPassword ? <RiEyeCloseFill /> : <RiEye2Line />}
+                </button>
+              </div>
             </div>
 
-            <div className="password-input-wrapper">
-              <input
-                ref={confirmPasswordRef}
-                type={showConfirmPassword ? "text" : "password"}
-                placeholder="Confirm your password"
-                required
-              />
-
-              <button
-                type="button"
-                className="password-toggle"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => setShowConfirmPassword((prev) => !prev)}
-              >
-                {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
-              </button>
+            {/* CONFIRM PASSWORD */}
+            <div className="form-group">
+              <div className="password-input-wrapper">
+                <input
+                  ref={confirmPasswordRef}
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Confirm your password"
+                  required
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => setShowConfirmPassword((p) => !p)}
+                >
+                  {showConfirmPassword ? <RiEyeCloseFill /> : <RiEye2Line />}
+                </button>
+              </div>
             </div>
 
+            {/* SUBMIT */}
             <button
               type="submit"
               className="btn btn-primary btn-lg"
@@ -165,16 +172,9 @@ export default function SignUp() {
           </form>
 
           <div className="auth-footer">
-            <p style={{ color: colors.textMuted, marginBottom: 0 }}>
+            <p style={{ color: colors.textMuted }}>
               Already have an account?{" "}
-              <Link
-                to="/login"
-                style={{
-                  color: colors.primary,
-                  fontWeight: "600",
-                  textDecoration: "none",
-                }}
-              >
+              <Link to="/login" style={{ color: colors.primary }}>
                 Sign in here
               </Link>
             </p>
@@ -182,15 +182,9 @@ export default function SignUp() {
         </div>
 
         <div className="auth-features" style={{ color: colors.textMuted }}>
-          <div className="feature">
-            <span>🔐</span> Secure Accounts
-          </div>
-          <div className="feature">
-            <span>📊</span> Organize Boards
-          </div>
-          <div className="feature">
-            <span>⚡</span> Fast & Reliable
-          </div>
+          <div className="feature">🔐 Secure Accounts</div>
+          <div className="feature">📊 Organize Boards</div>
+          <div className="feature">⚡ Fast & Reliable</div>
         </div>
       </div>
     </div>
