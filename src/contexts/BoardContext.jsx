@@ -11,6 +11,7 @@ import {
   updateDoc,
   getDocs,
   orderBy,
+  serverTimestamp,
 } from "firebase/firestore";
 import { useAuth } from "./AuthContext";
 import { hashPIN } from "../utils/helpers";
@@ -26,6 +27,7 @@ export function BoardProvider({ children }) {
   const [boards, setBoards] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // 🔄 REAL-TIME LISTENER
   useEffect(() => {
     if (!currentUser) {
       setBoards([]);
@@ -34,19 +36,30 @@ export function BoardProvider({ children }) {
     }
 
     setLoading(true);
+
     const q = query(
       collection(db, "boards"),
       where("userId", "==", currentUser.uid),
-      orderBy("order", "asc"),
+      orderBy("createdAt", "desc"),
     );
 
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        const boardsData = snapshot.docs.map((doc) => ({
+        let boardsData = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
+
+        // 📌 Sort pinned boards on top (client-side, zero cost)
+        boardsData.sort((a, b) => {
+          const aPinned = a.pinnedBy?.includes(currentUser.uid);
+          const bPinned = b.pinnedBy?.includes(currentUser.uid);
+
+          if (aPinned === bPinned) return 0;
+          return aPinned ? -1 : 1;
+        });
+
         setBoards(boardsData);
         setLoading(false);
       },
@@ -59,6 +72,7 @@ export function BoardProvider({ children }) {
     return unsubscribe;
   }, [currentUser]);
 
+  // ➕ ADD BOARD
   const addBoard = async (boardData) => {
     if (!currentUser) throw new Error("User not authenticated");
 
@@ -70,30 +84,32 @@ export function BoardProvider({ children }) {
       pinnedBy: [],
       isProtected: boardData.isProtected || false,
       pin: boardData.pin ? hashPIN(boardData.pin) : null,
-      order: boards.length,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     };
 
     const docRef = await addDoc(collection(db, "boards"), newBoard);
     return docRef.id;
   };
 
+  // ❌ DELETE BOARD
   const deleteBoard = async (id) => {
     if (!currentUser) throw new Error("User not authenticated");
     await deleteDoc(doc(db, "boards", id));
   };
 
+  // ✏️ UPDATE BOARD
   const updateBoard = async (id, updates) => {
     if (!currentUser) throw new Error("User not authenticated");
 
     const boardRef = doc(db, "boards", id);
+
     const updateData = {
       ...updates,
-      updatedAt: new Date().toISOString(),
+      updatedAt: serverTimestamp(),
     };
 
-    // Hash PIN if it's being updated
+    // 🔐 Hash PIN safely
     if (updates.pin && typeof updates.pin === "string") {
       updateData.pin = hashPIN(updates.pin);
     }
@@ -105,43 +121,56 @@ export function BoardProvider({ children }) {
     await updateBoard(id, { name: newName });
   };
 
-  const updateBoardOrder = async (newOrder) => {
-    // Update order for drag and drop
-    const updatePromises = newOrder.map((boardId, index) =>
-      updateDoc(doc(db, "boards", boardId), { order: index }),
-    );
-    await Promise.all(updatePromises);
-  };
-
+  // 📌 PIN TOGGLE
   const toggleBoardPin = async (boardId) => {
+    if (!currentUser) return;
+
     const board = boards.find((b) => b.id === boardId);
     if (!board) return;
 
     const pinnedBy = board.pinnedBy || [];
-    const isCurrentlyPinned = pinnedBy.includes(currentUser.uid);
+    const isPinned = pinnedBy.includes(currentUser.uid);
 
-    const updatedPinnedBy = isCurrentlyPinned
+    const updatedPinnedBy = isPinned
       ? pinnedBy.filter((uid) => uid !== currentUser.uid)
       : [...pinnedBy, currentUser.uid];
 
     await updateBoard(boardId, { pinnedBy: updatedPinnedBy });
   };
 
+  // 📊 HELPERS
   const getBoardCount = () => boards.length;
 
   const getPinnedBoards = () =>
     boards.filter((b) => b.pinnedBy?.includes(currentUser.uid));
 
+  // 📦 ONE-TIME FETCH (same query for consistency)
   const getBoards = async () => {
     if (!currentUser) return [];
 
     const q = query(
       collection(db, "boards"),
       where("userId", "==", currentUser.uid),
-      orderBy("order", "asc"),
+      orderBy("createdAt", "desc"),
     );
+
     const snapshot = await getDocs(q);
-    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+    let boardsData = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    // 📌 Apply same pinned sorting
+    boardsData.sort((a, b) => {
+      const aPinned = a.pinnedBy?.includes(currentUser.uid);
+      const bPinned = b.pinnedBy?.includes(currentUser.uid);
+
+      if (aPinned === bPinned) return 0;
+      return aPinned ? -1 : 1;
+    });
+
+    return boardsData;
   };
 
   return (
@@ -153,7 +182,6 @@ export function BoardProvider({ children }) {
         deleteBoard,
         updateBoard,
         updateBoardName,
-        updateBoardOrder,
         toggleBoardPin,
         getBoardCount,
         getPinnedBoards,
