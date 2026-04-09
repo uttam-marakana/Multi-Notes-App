@@ -47,7 +47,9 @@ export default function BoardCard({
       navigate(`/login?redirect=/notes?boardId=${board.id}`);
       return;
     }
-    navigate(`/notes?boardId=${board.id}`);
+    setTimeout(() => {
+      navigate(`/notes?boardId=${board.id}`);
+    }, 0);
   };
 
   const handlePINSubmit = async (pin) => {
