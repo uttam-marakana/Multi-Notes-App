@@ -1,9 +1,10 @@
-import React, { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import ThemeToggle from "../components/ThemeToggle";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 
 export default function Login() {
   const emailRef = useRef();
@@ -18,6 +19,7 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     const email = emailRef.current.value.trim();
     const password = passwordRef.current.value;
 
@@ -27,14 +29,20 @@ export default function Login() {
     }
 
     setLoading(true);
+
     try {
       await login(email, password);
-      localStorage.setItem("userId", ""); // Will be set by auth context
+
       toast.success("Login successful!");
-      setTimeout(() => {
-        const redirectTo = searchParams.get("redirect") || "/dashboard";
-        navigate(redirectTo);
-      }, 500);
+
+      // ✅ Smart redirect system
+      const redirectTo = searchParams.get("redirect");
+
+      if (redirectTo) {
+        navigate(redirectTo, { replace: true });
+      } else {
+        navigate("/", { replace: true }); // index page
+      }
     } catch (error) {
       toast.error(error.message || "Failed to log in");
     } finally {
@@ -63,6 +71,7 @@ export default function Login() {
           <h2 className="auth-title" style={{ color: colors.text }}>
             Welcome Back
           </h2>
+
           <p className="auth-subtitle" style={{ color: colors.textMuted }}>
             Sign in to access your notes and boards
           </p>
@@ -85,6 +94,7 @@ export default function Login() {
 
             <div className="form-group">
               <label style={{ color: colors.text }}>Password</label>
+
               <div className="password-input-wrapper">
                 <input
                   ref={passwordRef}
@@ -97,13 +107,15 @@ export default function Login() {
                     color: colors.text,
                   }}
                 />
+
                 <button
                   type="button"
                   className="password-toggle"
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={{ color: colors.textMuted }}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  aria-label="Toggle password visibility"
                 >
-                  {showPassword ? "🙈" : "👁️"}
+                  {showPassword ? <FiEyeOff /> : <FiEye />}
                 </button>
               </div>
             </div>
@@ -114,7 +126,7 @@ export default function Login() {
               disabled={loading}
               style={{ width: "100%", marginTop: "1.5rem" }}
             >
-              {loading ? "Signing in..." : "🔓 Sign In"}
+              {loading ? "Signing in..." : "Sign In"}
             </button>
           </form>
 

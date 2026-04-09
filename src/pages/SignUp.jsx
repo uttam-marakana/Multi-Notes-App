@@ -1,9 +1,10 @@
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { Link, useNavigate } from "react-router-dom";
 import ThemeToggle from "../components/ThemeToggle";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 
 export default function SignUp() {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ export default function SignUp() {
   const { colors } = useTheme();
 
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const nameRef = useRef();
@@ -116,54 +118,40 @@ export default function SignUp() {
               />
             </div>
 
-            <div className="form-group">
-              <label style={{ color: colors.text }}>Password</label>
-              <div className="password-input-wrapper">
-                <input
-                  ref={passwordRef}
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Minimum 6 characters"
-                  required
-                  style={{
-                    backgroundColor: colors.background,
-                    borderColor: colors.border,
-                    color: colors.text,
-                  }}
-                />
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={{ color: colors.textMuted }}
-                >
-                  {showPassword ? "🙈" : "👁️"}
-                </button>
-              </div>
+            <div className="password-input-wrapper">
+              <input
+                ref={passwordRef}
+                type={showPassword ? "text" : "password"}
+                placeholder="Minimum 6 characters"
+                required
+              />
+
+              <button
+                type="button"
+                className="password-toggle"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => setShowPassword((prev) => !prev)}
+              >
+                {showPassword ? <FiEyeOff /> : <FiEye />}
+              </button>
             </div>
 
-            <div className="form-group">
-              <label style={{ color: colors.text }}>Confirm Password</label>
-              <div className="password-input-wrapper">
-                <input
-                  ref={confirmPasswordRef}
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Confirm your password"
-                  required
-                  style={{
-                    backgroundColor: colors.background,
-                    borderColor: colors.border,
-                    color: colors.text,
-                  }}
-                />
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={{ color: colors.textMuted }}
-                >
-                  {showPassword ? "🙈" : "👁️"}
-                </button>
-              </div>
+            <div className="password-input-wrapper">
+              <input
+                ref={confirmPasswordRef}
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="Confirm your password"
+                required
+              />
+
+              <button
+                type="button"
+                className="password-toggle"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => setShowConfirmPassword((prev) => !prev)}
+              >
+                {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
+              </button>
             </div>
 
             <button
