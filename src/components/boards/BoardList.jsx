@@ -1,4 +1,3 @@
-import React from "react";
 import { Droppable, Draggable } from "react-beautiful-dnd";
 import { useTheme } from "../../contexts/ThemeContext";
 import BoardCard from "./BoardCard";
@@ -8,9 +7,7 @@ const BoardList = ({ boards, onDelete, onPin }) => {
 
   const currentUserId = localStorage.getItem("userId");
 
-  /* ===========================
-     SPLIT BOARDS
-  =========================== */
+  /* ------ SPLIT BOARDS ----------------------------- */
   const pinnedBoards = boards.filter((b) =>
     b.pinnedBy?.includes(currentUserId),
   );
