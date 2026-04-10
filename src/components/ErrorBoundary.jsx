@@ -1,5 +1,4 @@
 import React from "react";
-import { useTheme } from "../contexts/ThemeContext";
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -18,7 +17,7 @@ class ErrorBoundary extends React.Component {
     });
 
     // Log error to console in development
-    if (process.env.NODE_ENV === "development") {
+    if (import.meta.env.DEV) {
       console.error("Error caught by boundary:", error, errorInfo);
     }
 
@@ -43,42 +42,40 @@ class ErrorBoundary extends React.Component {
 }
 
 const ErrorFallback = ({ error, resetError }) => {
-  const { colors } = useTheme();
-
   return (
     <div
       className="error-fallback"
       style={{
         padding: "2rem",
         textAlign: "center",
-        backgroundColor: colors.surface,
-        border: `1px solid ${colors.danger}`,
+        backgroundColor: "var(--color-surface)",
+        border: "1px solid var(--color-danger)",
         borderRadius: "0.5rem",
         margin: "2rem auto",
         maxWidth: "600px",
       }}
     >
-      <h2 style={{ color: colors.danger, marginBottom: "1rem" }}>
+      <h2 style={{ color: "var(--color-danger)", marginBottom: "1rem" }}>
         🚨 Something went wrong
       </h2>
-      <p style={{ color: colors.text, marginBottom: "1.5rem" }}>
+      <p style={{ color: "var(--color-text)", marginBottom: "1.5rem" }}>
         We encountered an unexpected error. Please try refreshing the page.
       </p>
 
-      {process.env.NODE_ENV === "development" && (
+      {import.meta.env.DEV && (
         <details style={{ marginBottom: "1.5rem", textAlign: "left" }}>
-          <summary style={{ cursor: "pointer", color: colors.primary }}>
+          <summary style={{ cursor: "pointer", color: "var(--color-primary)" }}>
             Error Details (Development)
           </summary>
           <pre
             style={{
-              backgroundColor: colors.background,
+              backgroundColor: "var(--color-background)",
               padding: "1rem",
               borderRadius: "0.25rem",
               marginTop: "0.5rem",
               fontSize: "0.8rem",
               overflow: "auto",
-              color: colors.danger,
+              color: "var(--color-danger)",
             }}
           >
             {error && error.toString()}
@@ -89,7 +86,7 @@ const ErrorFallback = ({ error, resetError }) => {
       <button
         onClick={resetError}
         style={{
-          backgroundColor: colors.primary,
+          backgroundColor: "var(--color-primary)",
           color: "white",
           border: "none",
           padding: "0.5rem 1rem",
@@ -104,7 +101,7 @@ const ErrorFallback = ({ error, resetError }) => {
       <button
         onClick={() => window.location.reload()}
         style={{
-          backgroundColor: colors.secondary,
+          backgroundColor: "var(--color-secondary)",
           color: "white",
           border: "none",
           padding: "0.5rem 1rem",

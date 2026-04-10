@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTheme } from "../contexts/ThemeContext";
 
 export default function PINModal({
@@ -92,7 +93,7 @@ export default function PINModal({
     }
   };
 
-  return (
+  const modalContent = (
     <div className="modal-overlay" onClick={onClose}>
       <div
         className="modal pin-modal"
@@ -157,4 +158,6 @@ export default function PINModal({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
