@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 const ThemeContext = createContext();
 
@@ -17,7 +17,11 @@ export function ThemeProvider({ children }) {
     if (savedTheme) return savedTheme;
 
     // Check system preference
-    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+    if (
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches
+    ) {
       return "dark";
     }
     return "light";
