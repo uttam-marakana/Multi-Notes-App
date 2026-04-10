@@ -359,7 +359,6 @@ npm run preview
 ### UI & Interactions
 
 - **react-hot-toast**: Toast notifications
-- **react-beautiful-dnd**: Drag-and-drop
 - **Tailwind CSS**: Utility-first styling (optional)
 
 ### Utilities
