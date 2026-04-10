@@ -28,7 +28,6 @@ A comprehensive ReactJS application for managing notes and boards with premium U
 - **Edit Boards**: Update name, color, and other properties
 - **Delete Boards**: With confirmation dialog
 - **Pin/Favorite Boards**: Toggle pinned status
-- **Drag-and-Drop Reordering**: Using react-beautiful-dnd
 - **Color Palette**: 8 predefined colors for boards
 - **PIN Protection**: 4-digit PIN with hashing
 - **Board Grouping**: Pinned boards separate from unpinned
@@ -100,7 +99,6 @@ A comprehensive ReactJS application for managing notes and boards with premium U
 
 ### 10. **Dependencies Added** ✅
 
-- react-beautiful-dnd: Drag and drop
 - react-hot-toast: Notifications
 
 ---
@@ -351,7 +349,6 @@ src/
 
 ### Drag-and-drop not working
 
-- Ensure react-beautiful-dnd is installed
 - Check DragDropContext is wrapping the list
 - Verify unique draggable IDs
 
