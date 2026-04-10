@@ -592,6 +592,7 @@ textarea::placeholder {
 .modal-overlay {
   position: fixed;
   inset: 0;
+  padding: var(--spacing-lg);
   background: linear-gradient(
     135deg,
     rgba(0, 0, 0, 0.4) 0%,
@@ -602,7 +603,7 @@ textarea::placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 2000;
   animation: fadeIn 0.3s ease;
 }
 
@@ -616,14 +617,19 @@ textarea::placeholder {
     0 20px 60px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
   max-width: 500px;
-  width: 90%;
+  width: min(100%, 500px);
   max-height: 90vh;
   overflow-y: auto;
   animation: rotateIn 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  position: relative;
+  z-index: 2001;
 }
 
 .pin-modal {
   max-width: 440px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.92)),
+    var(--glass-bg);
 }
 
 .modal-header {
@@ -710,6 +716,7 @@ textarea::placeholder {
   font-size: 1.75rem;
   letter-spacing: 0.1em;
   font-weight: 700;
+  margin: 0;
 }
 
 /* ----- ALERTS & NOTIFICATIONS ---------------------------- */
@@ -1775,6 +1782,12 @@ textarea::placeholder {
   animation: slideInLeft 0.6s ease;
 }
 
+.auth-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
 .auth-brand {
   font-size: 2rem;
   font-weight: 700;
@@ -1787,6 +1800,31 @@ textarea::placeholder {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+.page-back-button {
+  width: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--glass-bg);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.page-back-button svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.page-back-button:hover {
+  transform: translateX(-2px);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
 .auth-container {
