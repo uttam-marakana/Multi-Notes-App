@@ -1,4 +1,4 @@
-import { Suspense, lazy } from "react";
+import { Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 // Import Context Providers
@@ -12,17 +12,16 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import ErrorBoundary from "./components/ErrorBoundary";
 import LoadingSpinner from "./components/LoadingSpinner";
 
-// Lazy load pages for better performance
-const Login = lazy(() => import("./pages/Login"));
-const SignUp = lazy(() => import("./pages/SignUp"));
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const BoardManager = lazy(() => import("./pages/BoardManager"));
-const AddBoard = lazy(() => import("./pages/AddBoard"));
-const BoardEdit = lazy(() => import("./pages/BoardEdit"));
-const NoteManager = lazy(() => import("./pages/NoteManager"));
-const AddNote = lazy(() => import("./pages/AddNote"));
-const NoteEdit = lazy(() => import("./pages/NoteEdit"));
-const NotFound = lazy(() => import("./pages/NotFound"));
+import Login from "./pages/Login";
+import SignUp from "./pages/SignUp";
+import Dashboard from "./pages/Dashboard";
+import BoardManager from "./pages/BoardManager";
+import AddBoard from "./pages/AddBoard";
+import BoardEdit from "./pages/BoardEdit";
+import NoteManager from "./pages/NoteManager";
+import AddNote from "./pages/AddNote";
+import NoteEdit from "./pages/NoteEdit";
+import NotFound from "./pages/NotFound";
 
 function App() {
   return (
