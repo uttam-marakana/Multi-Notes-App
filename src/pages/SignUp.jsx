@@ -6,9 +6,6 @@ import { Link, useNavigate } from "react-router-dom";
 import ThemeToggle from "../components/ThemeToggle";
 import { RiEye2Line, RiEyeCloseFill } from "react-icons/ri";
 
-import { db } from "../config/firebase";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-
 export default function SignUp() {
   const navigate = useNavigate();
   const { signUp } = useAuth();
@@ -47,16 +44,8 @@ export default function SignUp() {
     setLoading(true);
 
     try {
-      // 🔐 Firebase Auth (ONLY email + password)
-      const userCredential = await signUp(email, password);
-      const user = userCredential.user;
-
-      // 🗄️ Firestore (store extra user data)
-      await setDoc(doc(db, "Register_Users", user.uid), {
-        uid: user.uid,
+      await signUp(email, password, {
         name,
-        email,
-        createdAt: serverTimestamp(),
       });
 
       toast.success("Account created successfully!");
