@@ -1,10 +1,11 @@
 import { useTheme } from "../../contexts/ThemeContext";
+import { useAuth } from "../../contexts/AuthContext";
 import BoardCard from "./BoardCard";
 
 const BoardList = ({ boards, onDelete, onPin }) => {
   const { colors } = useTheme();
-
-  const currentUserId = localStorage.getItem("userId");
+  const { currentUser } = useAuth();
+  const currentUserId = currentUser?.uid;
 
   /* ------ SPLIT BOARDS ----------------------------- */
   const pinnedBoards = boards.filter((b) =>
