@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { auth, db } from "../config/firebase";
 
 import {
@@ -8,7 +8,7 @@ import {
   onAuthStateChanged,
 } from "firebase/auth";
 
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 
 const AuthContext = createContext();
 
@@ -20,27 +20,33 @@ export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const buildUserProfile = useCallback(async (user) => {
+    if (!user) return null;
+
+    const docRef = doc(db, "users", user.uid);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      return {
+        uid: user.uid,
+        email: user.email,
+      };
+    }
+
+    return {
+      uid: user.uid,
+      email: user.email,
+      ...docSnap.data(),
+    };
+  }, []);
+
   // ✅ AUTO AUTH STATE SYNC
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       try {
         if (user) {
-          const docRef = doc(db, "users", user.uid);
-          const docSnap = await getDoc(docRef);
-
-          if (docSnap.exists()) {
-            setCurrentUser({
-              uid: user.uid,
-              email: user.email,
-              ...docSnap.data(),
-            });
-          } else {
-            // fallback (rare case)
-            setCurrentUser({
-              uid: user.uid,
-              email: user.email,
-            });
-          }
+          const profile = await buildUserProfile(user);
+          setCurrentUser(profile);
         } else {
           setCurrentUser(null);
         }
@@ -52,7 +58,7 @@ export function AuthProvider({ children }) {
     });
 
     return unsubscribe;
-  }, []);
+  }, [buildUserProfile]);
 
   // ✅ SIGNUP
   const signUp = async (email, password, userDetails = {}) => {
@@ -69,7 +75,14 @@ export function AuthProvider({ children }) {
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
         email: user.email,
-        createdAt: new Date().toISOString(),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        ...userDetails,
+      });
+
+      setCurrentUser({
+        uid: user.uid,
+        email: user.email,
         ...userDetails,
       });
 
@@ -114,16 +127,8 @@ export function AuthProvider({ children }) {
     if (!auth.currentUser) return;
 
     try {
-      const docRef = doc(db, "users", auth.currentUser.uid);
-      const docSnap = await getDoc(docRef);
-
-      if (docSnap.exists()) {
-        setCurrentUser({
-          uid: auth.currentUser.uid,
-          email: auth.currentUser.email,
-          ...docSnap.data(),
-        });
-      }
+      const profile = await buildUserProfile(auth.currentUser);
+      setCurrentUser(profile);
     } catch (error) {
       console.error("Refresh Error:", error.message);
     }

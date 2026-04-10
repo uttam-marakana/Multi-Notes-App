@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useCallback } from "react";
 import { db, storage } from "../config/firebase";
 
 import {
@@ -10,6 +10,7 @@ import {
   updateDoc,
   query,
   orderBy,
+  getDoc,
 } from "firebase/firestore";
 import {
   ref as storageRef,
@@ -18,7 +19,7 @@ import {
   deleteObject,
 } from "firebase/storage";
 import { useAuth } from "./AuthContext";
-import { hashPIN } from "../utils/helpers";
+import { hashPIN, revokeProtectedAccess } from "../utils/helpers";
 
 const NoteContext = createContext();
 
@@ -31,7 +32,7 @@ export function NoteProvider({ children }) {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const uploadFiles = async (boardId, files) => {
+  const uploadFiles = useCallback(async (boardId, files) => {
     if (!currentUser || !files?.length) return [];
 
     const fileArray = Array.from(files).slice(0, 10);
@@ -56,9 +57,9 @@ export function NoteProvider({ children }) {
     );
 
     return uploadedFiles;
-  };
+  }, [currentUser]);
 
-  const deleteStoredFiles = async (files = []) => {
+  const deleteStoredFiles = useCallback(async (files = []) => {
     if (!files.length) return;
 
     const deletePromises = files.map(async (file) => {
@@ -68,9 +69,9 @@ export function NoteProvider({ children }) {
     });
 
     return Promise.all(deletePromises);
-  };
+  }, []);
 
-  const fetchNotes = (boardId) => {
+  const fetchNotes = useCallback((boardId) => {
     if (!currentUser || !boardId) {
       setNotes([]);
       return;
@@ -104,7 +105,7 @@ export function NoteProvider({ children }) {
     );
 
     return unsubscribe;
-  };
+  }, [currentUser]);
 
   const addNote = async (boardId, noteData) => {
     if (!boardId || !currentUser) throw new Error("Invalid board or user");
@@ -153,7 +154,14 @@ export function NoteProvider({ children }) {
       "notes",
       noteId,
     );
+
+    const noteSnapshot = await getDoc(noteRef);
+    if (noteSnapshot.exists()) {
+      await deleteStoredFiles(noteSnapshot.data().files || []);
+    }
+
     await deleteDoc(noteRef);
+    revokeProtectedAccess("note", noteId);
   };
 
   const updateNote = async (boardId, noteId, updates) => {
@@ -205,6 +213,10 @@ export function NoteProvider({ children }) {
 
     if (updates.pin && typeof updates.pin === "string") {
       updateData.pin = hashPIN(updates.pin);
+    }
+
+    if (updates.isProtected === false) {
+      updateData.pin = null;
     }
 
     await updateDoc(noteRef, updateData);

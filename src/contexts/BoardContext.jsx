@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { db } from "../config/firebase";
+import { db, storage } from "../config/firebase";
 import {
   collection,
   query,
@@ -13,8 +13,9 @@ import {
   orderBy,
   serverTimestamp,
 } from "firebase/firestore";
+import { ref as storageRef, deleteObject } from "firebase/storage";
 import { useAuth } from "./AuthContext";
-import { hashPIN } from "../utils/helpers";
+import { hashPIN, revokeProtectedAccess } from "../utils/helpers";
 
 const BoardContext = createContext();
 
@@ -89,6 +90,7 @@ export function BoardProvider({ children }) {
     const newBoard = {
       name: boardData.name || "Untitled Board",
       userId: currentUser.uid,
+      ownerId: currentUser.uid,
       color: boardData.color || "#3B82F6",
       description: boardData.description || "",
       pinnedBy: [],
@@ -107,7 +109,23 @@ export function BoardProvider({ children }) {
      =========================== */
   const deleteBoard = async (id) => {
     if (!currentUser) throw new Error("User not authenticated");
+
+    const notesRef = collection(db, "users", currentUser.uid, "boards", id, "notes");
+    const notesSnapshot = await getDocs(notesRef);
+
+    await Promise.allSettled(
+      notesSnapshot.docs.flatMap((noteDoc) => {
+        const noteData = noteDoc.data();
+        const fileDeletes = (noteData.files || [])
+          .filter((file) => file?.path)
+          .map((file) => deleteObject(storageRef(storage, file.path)));
+
+        return [...fileDeletes, deleteDoc(noteDoc.ref)];
+      }),
+    );
+
     await deleteDoc(doc(db, "boards", id));
+    revokeProtectedAccess("board", id);
   };
 
   /* ------ ✏️ UPDATE BOARD
@@ -124,6 +142,10 @@ export function BoardProvider({ children }) {
 
     if (updates.pin && typeof updates.pin === "string") {
       updateData.pin = hashPIN(updates.pin);
+    }
+
+    if (updates.isProtected === false) {
+      updateData.pin = null;
     }
 
     await updateDoc(boardRef, updateData);
