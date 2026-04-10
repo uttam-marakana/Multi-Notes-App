@@ -49,17 +49,6 @@ export default function NoteEdit() {
   );
   const note = notes.find((item) => item.id === noteId);
 
-  if (!currentUser) {
-    return (
-      <Navigate
-        to={`/login?redirect=${encodeURIComponent(
-          location.pathname + location.search,
-        )}`}
-        replace
-      />
-    );
-  }
-
   useEffect(() => {
     if (!boardId) return undefined;
     setRequestedNotes(true);
@@ -85,6 +74,17 @@ export default function NoteEdit() {
       setPinError(false);
     }
   }, [pin, pinConfirm, pinError]);
+
+  if (!currentUser) {
+    return (
+      <Navigate
+        to={`/login?redirect=${encodeURIComponent(
+          location.pathname + location.search,
+        )}`}
+        replace
+      />
+    );
+  }
 
   const toggleProtection = () => {
     setIsProtected((prev) => {

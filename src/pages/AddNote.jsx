@@ -42,6 +42,15 @@ export default function AddNote() {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [fileError, setFileError] = useState("");
   const [loading, setLoading] = useState(false);
+  const boardLocked = Boolean(
+    board?.isProtected && !hasProtectedAccess("board", boardId),
+  );
+
+  useEffect(() => {
+    if (pinError && pin === pinConfirm) {
+      setPinError(false);
+    }
+  }, [pin, pinConfirm, pinError]);
 
   if (!currentUser) {
     return (
@@ -53,14 +62,6 @@ export default function AddNote() {
       />
     );
   }
-
-  const boardLocked = Boolean(board?.isProtected && !hasProtectedAccess("board", boardId));
-
-  useEffect(() => {
-    if (pinError && pin === pinConfirm) {
-      setPinError(false);
-    }
-  }, [pin, pinConfirm, pinError]);
 
   const toggleProtection = () => {
     setIsProtected((prev) => {
