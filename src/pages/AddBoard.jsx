@@ -6,6 +6,7 @@ import { useBoard } from "../contexts/BoardContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { TiArrowSortedDown, TiArrowSortedUp } from "react-icons/ti";
 import PinInput from "../components/PinInput";
+import PageBackButton from "../components/PageBackButton";
 
 export default function AddBoard({ onSuccess }) {
   const { currentUser } = useAuth();
@@ -107,6 +108,9 @@ export default function AddBoard({ onSuccess }) {
   return (
     <div className="add-board-wrapper">
       <div className="add-board-container glass-card">
+        {location.pathname === "/boards/add" && (
+          <PageBackButton fallback="/" />
+        )}
         <h3>✨ Create New Board</h3>
 
         <form onSubmit={handleSubmit} className="add-board-form">

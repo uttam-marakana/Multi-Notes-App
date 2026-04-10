@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Navigate,
   useLocation,
@@ -12,6 +12,7 @@ import { useBoard } from "../contexts/BoardContext";
 import { useTheme } from "../contexts/ThemeContext";
 import PinInput from "../components/PinInput";
 import PINModal from "../components/PINModal";
+import PageBackButton from "../components/PageBackButton";
 import {
   grantProtectedAccess,
   hasProtectedAccess,
@@ -37,6 +38,7 @@ export default function AddNote() {
   const [isProtected, setIsProtected] = useState(false);
   const [pin, setPin] = useState("");
   const [pinConfirm, setPinConfirm] = useState("");
+  const [pinError, setPinError] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [fileError, setFileError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -53,6 +55,26 @@ export default function AddNote() {
   }
 
   const boardLocked = Boolean(board?.isProtected && !hasProtectedAccess("board", boardId));
+
+  useEffect(() => {
+    if (pinError && pin === pinConfirm) {
+      setPinError(false);
+    }
+  }, [pin, pinConfirm, pinError]);
+
+  const toggleProtection = () => {
+    setIsProtected((prev) => {
+      const next = !prev;
+
+      if (!next) {
+        setPin("");
+        setPinConfirm("");
+        setPinError(false);
+      }
+
+      return next;
+    });
+  };
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files || []);
@@ -102,10 +124,12 @@ export default function AddNote() {
 
     if (isProtected) {
       if (pin.length !== 4) {
+        setPinError(true);
         toast.error("PIN must be 4 digits");
         return;
       }
       if (pin !== pinConfirm) {
+        setPinError(true);
         toast.error("PINs do not match");
         return;
       }
@@ -153,6 +177,7 @@ export default function AddNote() {
             borderColor: colors.border,
           }}
         >
+          <PageBackButton fallback={`/notes?boardId=${boardId || ""}`} />
           <h2 style={{ color: colors.text }}>📝 Create New Note</h2>
 
           {boardLocked && (
@@ -221,11 +246,11 @@ export default function AddNote() {
 
               <div
                 className={`advanced-box ${isProtected ? "active" : ""}`}
-                onClick={() => setIsProtected((prev) => !prev)}
+                onClick={toggleProtection}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") setIsProtected((prev) => !prev);
+                  if (e.key === "Enter") toggleProtection();
                 }}
               >
                 <div className="advanced-header">

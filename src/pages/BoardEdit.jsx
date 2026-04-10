@@ -5,6 +5,7 @@ import { useBoard } from "../contexts/BoardContext";
 import { useTheme } from "../contexts/ThemeContext";
 import PinInput from "../components/PinInput";
 import PINModal from "../components/PINModal";
+import PageBackButton from "../components/PageBackButton";
 import {
   grantProtectedAccess,
   hasProtectedAccess,
@@ -179,6 +180,7 @@ export default function BoardEdit() {
             borderColor: colors.border,
           }}
         >
+          <PageBackButton fallback="/" />
           <h2 style={{ color: colors.text }}>Edit Board</h2>
 
           <form onSubmit={handleSubmit} className="add-note-form">
