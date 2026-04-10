@@ -43,6 +43,7 @@ function App() {
 
                       {/* Dashboard - Public Access (allows guest browsing) */}
                       <Route path="/" element={<Dashboard />} />
+                      <Route path="/dashboard" element={<Navigate to="/" replace />} />
 
                       {/* Protected Routes */}
                       <Route
