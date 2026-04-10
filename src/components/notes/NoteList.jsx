@@ -1,10 +1,12 @@
 import React from "react";
 import { useTheme } from "../../contexts/ThemeContext";
+import { useAuth } from "../../contexts/AuthContext";
 import NoteCard from "./NoteCard";
 
 const NoteList = ({ notes, boardId, onEdit, onDelete, onPin }) => {
   const { colors } = useTheme();
-  const currentUserId = localStorage.getItem("userId");
+  const { currentUser } = useAuth();
+  const currentUserId = currentUser?.uid;
 
   if (!notes || notes.length === 0) {
     return (
