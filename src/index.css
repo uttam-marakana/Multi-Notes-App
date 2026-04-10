@@ -622,6 +622,10 @@ textarea::placeholder {
   animation: rotateIn 0.4s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
+.pin-modal {
+  max-width: 440px;
+}
+
 .modal-header {
   padding: var(--spacing-lg);
   border-bottom: 1px solid var(--glass-border);
@@ -651,6 +655,12 @@ textarea::placeholder {
 .modal-body {
   padding: var(--spacing-lg);
   animation: scaleIn 0.5s ease;
+}
+
+.pin-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
 }
 
 .modal-footer {
@@ -685,6 +695,21 @@ textarea::placeholder {
   background: rgba(59, 130, 246, 0.1);
   color: var(--color-primary);
   transform: rotate(90deg);
+}
+
+.pin-modal-inputs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--spacing-md);
+}
+
+.pin-modal-digit {
+  width: 100%;
+  min-height: 72px;
+  text-align: center;
+  font-size: 1.75rem;
+  letter-spacing: 0.1em;
+  font-weight: 700;
 }
 
 /* ----- ALERTS & NOTIFICATIONS ---------------------------- */
@@ -1405,6 +1430,44 @@ textarea::placeholder {
   margin-bottom: var(--spacing-md);
 }
 
+.board-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.board-title-group {
+  min-width: 0;
+}
+
+.board-subtitle {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.board-card-badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.board-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  color: white;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.15);
+}
+
 .board-color-indicator {
   width: 12px;
   height: 12px;
@@ -1432,6 +1495,10 @@ textarea::placeholder {
   overflow: hidden;
 }
 
+.board-card-body {
+  flex: 1;
+}
+
 .board-meta {
   flex: 1;
   padding-top: var(--spacing-md);
@@ -1440,6 +1507,9 @@ textarea::placeholder {
   color: var(--color-text-muted);
   display: flex;
   align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
 }
 
 .board-actions {
@@ -1450,10 +1520,14 @@ textarea::placeholder {
 }
 
 .board-actions .btn {
-  flex: 1;
+  flex: 0 0 auto;
   min-width: 60px;
   padding: var(--spacing-xs) var(--spacing-sm);
   font-size: 0.75rem;
+}
+
+.board-action-main {
+  flex: 1;
 }
 
 .board-actions .btn-outline {
@@ -2232,11 +2306,11 @@ button > svg {
 }
 
 .note-file-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  padding: 0.5rem;
+  gap: 0.75rem;
+  padding: 0.75rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   text-decoration: none;
@@ -2257,6 +2331,23 @@ button > svg {
   object-fit: cover;
   border-radius: 0.75rem;
   border: 1px solid var(--color-border);
+}
+
+.note-file-icon {
+  font-size: 1.4rem;
+}
+
+.note-file-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note-file-size,
+.note-file-more {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
 }
 
 .note-file-icon {
