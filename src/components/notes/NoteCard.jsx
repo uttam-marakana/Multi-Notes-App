@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useAuth } from "../../contexts/AuthContext";
 import PINModal from "../PINModal";
@@ -8,11 +8,13 @@ import {
   formatDate,
   getFileIcon,
   formatFileSize,
+  verifyPIN,
+  grantProtectedAccess,
+  hasProtectedAccess,
 } from "../../utils/helpers";
 
 export default function NoteCard({
   note,
-  boardId,
   onEdit,
   onDelete,
   onPin,
@@ -21,35 +23,62 @@ export default function NoteCard({
   const { colors, priorityColors } = useTheme();
   const { currentUser } = useAuth();
   const [showPINModal, setShowPINModal] = useState(false);
-  const [isVerified, setIsVerified] = useState(!note.isProtected);
+  const [pendingAction, setPendingAction] = useState(null);
+  const [isVerified, setIsVerified] = useState(
+    !note.isProtected || hasProtectedAccess("note", note.id),
+  );
+
   const currentUserId = currentUser?.uid;
   const isOwner = !note.ownerId || note.ownerId === currentUserId;
+  const isPinned = Boolean(currentUserId && note.pinnedBy?.includes(currentUserId));
+  const priorityColor = getPriorityColor(note.priority, priorityColors);
 
-  const handleEdit = () => {
-    if (!isOwner) return;
+  useEffect(() => {
+    setIsVerified(!note.isProtected || hasProtectedAccess("note", note.id));
+  }, [note.id, note.isProtected]);
+
+  const runProtectedAction = (action) => {
     if (note.isProtected && !isVerified) {
+      setPendingAction(() => action);
       setShowPINModal(true);
       return;
     }
-    onEdit();
+
+    action();
+  };
+
+  const handleEdit = () => {
+    if (!isOwner) return;
+    runProtectedAction(onEdit);
+  };
+
+  const handleDelete = () => {
+    if (!isOwner) return;
+    runProtectedAction(onDelete);
+  };
+
+  const handlePin = () => {
+    if (!isOwner) return;
+    runProtectedAction(onPin);
   };
 
   const handlePINSubmit = async (pin) => {
-    const { hashPIN } = await import("../../utils/helpers");
-    if (hashPIN(pin) === note.pin) {
-      setIsVerified(true);
-      setShowPINModal(false);
-      return;
+    if (!verifyPIN(pin, note.pin)) {
+      throw new Error("Invalid PIN");
     }
-    throw new Error("Invalid PIN");
-  };
 
-  const isPinned = note.pinnedBy?.includes(currentUserId);
-  const priorityColor = getPriorityColor(note.priority, priorityColors);
+    grantProtectedAccess("note", note.id);
+    setIsVerified(true);
+    setShowPINModal(false);
+
+    const nextAction = pendingAction;
+    setPendingAction(null);
+    nextAction?.();
+  };
 
   return (
     <>
-      <div
+      <article
         className={`note-card ${isDragging ? "dragging" : ""}`}
         style={{
           backgroundColor: colors.surface,
@@ -57,17 +86,15 @@ export default function NoteCard({
           borderLeftColor: priorityColor,
         }}
       >
-        {/* Protected Badge */}
         {note.isProtected && !isVerified && (
           <div
             className="protected-badge"
             style={{ backgroundColor: colors.danger }}
           >
-            🔒
+            Locked
           </div>
         )}
 
-        {/* Read-Only Banner */}
         {!isOwner && (
           <div
             style={{
@@ -85,30 +112,27 @@ export default function NoteCard({
           </div>
         )}
 
-        {/* Pinned Badge */}
         {isPinned && (
           <div
             className="pinned-badge"
             style={{ backgroundColor: colors.primary }}
           >
-            ⭐
+            Pinned
           </div>
         )}
 
-        {/* Priority Indicator */}
         <div
           className="priority-indicator"
           style={{ backgroundColor: priorityColor }}
           title={`Priority: ${note.priority?.toUpperCase()}`}
         />
 
-        {/* Note Content */}
         <h4 className="note-title" style={{ color: colors.text }}>
           {truncateText(note.title, 30)}
         </h4>
 
         <p className="note-preview" style={{ color: colors.textMuted }}>
-          {truncateText(note.content, 60)}
+          {truncateText(note.content, 90) || "No content yet."}
         </p>
 
         {note.files?.length > 0 && (
@@ -153,62 +177,58 @@ export default function NoteCard({
           </div>
         )}
 
-        {/* Note Meta */}
         <div
           className="note-meta"
           style={{ color: colors.textMuted, borderTopColor: colors.border }}
         >
-          <small>{formatDate(note.createdAt)}</small>
-          {note.files?.length > 0 && (
-            <small>📎 {note.files.length} file(s)</small>
-          )}
+          <small>{formatDate(note.createdAt) || "recently updated"}</small>
+          <small>{note.priority || "low"} priority</small>
+          {note.files?.length > 0 && <small>{note.files.length} attachment(s)</small>}
         </div>
 
-        {/* Action Buttons */}
         <div className="note-actions">
           <button
-            className="btn btn-sm btn-ghost"
+            className="btn btn-outline btn-sm"
             onClick={handleEdit}
             title={isOwner ? "Edit note" : "Read only"}
-            style={{
-              color: isOwner ? colors.text : colors.textMuted,
-              cursor: isOwner ? "pointer" : "not-allowed",
-            }}
             disabled={!isOwner}
           >
-            ✏️
+            Edit
           </button>
 
-          {isOwner && isVerified && (
+          {isOwner && (
             <>
               <button
-                className="btn btn-sm btn-ghost"
-                onClick={() => onPin()}
+                className="btn btn-ghost btn-sm"
+                onClick={handlePin}
                 title={isPinned ? "Unpin note" : "Pin note"}
                 style={{ color: isPinned ? colors.primary : colors.textMuted }}
               >
-                {isPinned ? "⭐" : "☆"}
+                {isPinned ? "★" : "☆"}
               </button>
 
               <button
-                className="btn btn-sm btn-ghost"
-                onClick={() => onDelete()}
+                className="btn btn-ghost btn-sm"
+                onClick={handleDelete}
                 title="Delete note"
                 style={{ color: colors.danger }}
               >
-                🗑️
+                Delete
               </button>
             </>
           )}
         </div>
-      </div>
+      </article>
 
       <PINModal
         isOpen={showPINModal}
-        onClose={() => setShowPINModal(false)}
+        onClose={() => {
+          setPendingAction(null);
+          setShowPINModal(false);
+        }}
         onSubmit={handlePINSubmit}
         title="Note Protected"
-        description="This note is protected with a PIN. Enter it to continue."
+        description="Enter the 4-digit PIN to continue with this note."
       />
     </>
   );
