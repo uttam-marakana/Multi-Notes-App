@@ -132,7 +132,7 @@ export default function Login() {
 
           <div className="auth-footer">
             <p style={{ color: colors.textMuted, marginBottom: "1rem" }}>
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <Link
                 to="/signup"
                 style={{

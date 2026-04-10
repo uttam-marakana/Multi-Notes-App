@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { useNavigate } from "react-router-dom";
@@ -29,6 +29,9 @@ const Dashboard = () => {
     if (hour < 18) return "Good Afternoon";
     return "Good Evening";
   };
+
+  const userLabel =
+    currentUser?.name || currentUser?.displayName || currentUser?.email?.split("@")[0];
 
   return (
     <div
@@ -69,8 +72,7 @@ const Dashboard = () => {
           {currentUser && (
             <div className="dashboard-welcome" style={{ color: colors.text }}>
               <p className="greeting-text">
-                {getGreetingMessage()},{" "}
-                <strong>{currentUser.email?.split("@")[0]}</strong>!
+                {getGreetingMessage()}, <strong>{userLabel}</strong>!
               </p>
             </div>
           )}

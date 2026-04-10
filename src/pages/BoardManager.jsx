@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
@@ -12,8 +12,7 @@ import { MdOutlineAddCircleOutline } from "react-icons/md";
 
 export default function BoardManager() {
   const { currentUser } = useAuth();
-  const { boards, deleteBoard, toggleBoardPin, loading } =
-    useBoard();
+  const { boards, deleteBoard, toggleBoardPin, loading } = useBoard();
 
   const { colors } = useTheme();
   const navigate = useNavigate();
@@ -32,6 +31,9 @@ export default function BoardManager() {
   }, [currentUser]);
 
   const displayBoards = currentUser ? boards : guestBoards;
+  const pinnedBoardsCount = displayBoards.filter((board) =>
+    board.pinnedBy?.includes(currentUser?.uid),
+  ).length;
 
   /* ------ DELETE ----------------------------- */
   const handleDelete = (boardId) => {
@@ -113,7 +115,12 @@ export default function BoardManager() {
     <div className="board-manager glass-container">
       {/* HEADER */}
       <div className="board-manager-header glass-card">
-        <h2 style={{ color: colors.text }}>Create Boards</h2>
+        <div>
+          <h2 style={{ color: colors.text }}>Boards</h2>
+          <p style={{ color: colors.textMuted, margin: 0 }}>
+            {displayBoards.length} total board(s) and {pinnedBoardsCount} pinned
+          </p>
+        </div>
 
         <button className="btn btn-primary" onClick={handleCreateBoard}>
           <MdOutlineAddCircleOutline />
