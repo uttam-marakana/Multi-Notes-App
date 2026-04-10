@@ -1,9 +1,15 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useAuth } from "../../contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
-import { truncateText, formatDate } from "../../utils/helpers";
+import {
+  truncateText,
+  formatDate,
+  verifyPIN,
+  grantProtectedAccess,
+  hasProtectedAccess,
+} from "../../utils/helpers";
 import PINModal from "../PINModal";
 
 export default function BoardCard({
@@ -15,62 +21,99 @@ export default function BoardCard({
   const { colors } = useTheme();
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+
   const [showPINModal, setShowPINModal] = useState(false);
-  const [isVerified, setIsVerified] = useState(!board.isProtected);
+  const [pendingAction, setPendingAction] = useState(null);
+  const [isVerified, setIsVerified] = useState(
+    !board.isProtected || hasProtectedAccess("board", board.id),
+  );
+
   const currentUserId = currentUser?.uid;
-  const isOwner = !board.ownerId || board.ownerId === currentUserId;
+  const isOwner =
+    !board.ownerId || board.ownerId === currentUserId || board.userId === currentUserId;
+  const isPinned = Boolean(currentUserId && board.pinnedBy?.includes(currentUserId));
+
+  useEffect(() => {
+    setIsVerified(!board.isProtected || hasProtectedAccess("board", board.id));
+  }, [board.id, board.isProtected]);
+
+  const runProtectedAction = (action) => {
+    if (board.isProtected && !isVerified) {
+      setPendingAction(() => action);
+      setShowPINModal(true);
+      return;
+    }
+
+    action();
+  };
+
+  const handleViewNotes = () => {
+    if (!currentUser) {
+      toast.error("Please login to view notes");
+      navigate(`/login?redirect=${encodeURIComponent(`/notes?boardId=${board.id}`)}`);
+      return;
+    }
+
+    runProtectedAction(() => navigate(`/notes?boardId=${board.id}`));
+  };
 
   const handleEdit = () => {
     if (!currentUser) {
       toast.error("Please login to edit boards");
-      navigate(`/login?redirect=/boards/edit/${board.id}`);
+      navigate(`/login?redirect=${encodeURIComponent(`/boards/edit/${board.id}`)}`);
       return;
     }
+
     if (!isOwner) {
       toast.error("You can only edit your own boards");
       return;
     }
-    if (board.isProtected && !isVerified) {
-      setShowPINModal(true);
-      return;
-    }
-    navigate(`/boards/edit/${board.id}`);
+
+    runProtectedAction(() => navigate(`/boards/edit/${board.id}`));
   };
 
-  const handleViewNotes = () => {
-    if (board.isProtected && !isVerified) {
-      setShowPINModal(true);
-      return;
-    }
-    setTimeout(() => {
-      navigate(`/notes?boardId=${board.id}`);
-    }, 0);
-
+  const handleTogglePin = () => {
     if (!currentUser) {
-      toast.error("Please login to view notes");
-      navigate(`/login?redirect=/notes?boardId=${board.id}`);
+      toast.error("Please login to pin boards");
+      navigate("/login?redirect=/");
       return;
     }
-    setTimeout(() => {
-      navigate(`/notes?boardId=${board.id}`);
-    }, 0);
+
+    runProtectedAction(() => onPin(board.id));
+  };
+
+  const handleDelete = () => {
+    if (!currentUser) {
+      toast.error("Please login to delete boards");
+      navigate("/login?redirect=/");
+      return;
+    }
+
+    if (!isOwner) {
+      toast.error("You can only delete your own boards");
+      return;
+    }
+
+    runProtectedAction(() => onDelete(board.id));
   };
 
   const handlePINSubmit = async (pin) => {
-    const { hashPIN } = await import("../../utils/helpers");
-    if (hashPIN(pin) === board.pin) {
-      setIsVerified(true);
-      setShowPINModal(false);
-      return;
+    if (!verifyPIN(pin, board.pin)) {
+      throw new Error("Invalid PIN");
     }
-    throw new Error("Invalid PIN");
-  };
 
-  const isPinned = board.pinnedBy?.includes(currentUserId);
+    grantProtectedAccess("board", board.id);
+    setIsVerified(true);
+    setShowPINModal(false);
+
+    const nextAction = pendingAction;
+    setPendingAction(null);
+    nextAction?.();
+  };
 
   return (
     <>
-      <div
+      <article
         className={`board-card ${isDragging ? "dragging" : ""}`}
         style={{
           borderLeftColor: board.color || colors.primary,
@@ -78,112 +121,93 @@ export default function BoardCard({
           borderColor: colors.border,
         }}
       >
-        {/* Protected Badge */}
-        {board.isProtected && !isVerified && (
-          <div
-            className="protected-badge"
-            style={{ backgroundColor: colors.danger }}
-          >
-            🔒 Protected
+        <div className="board-card-top">
+          <div className="board-card-header">
+            <div
+              className="board-color-indicator"
+              style={{ backgroundColor: board.color || colors.primary }}
+            />
+            <div className="board-title-group">
+              <h3 className="board-title" style={{ color: colors.text }}>
+                {truncateText(board.name, 42)}
+              </h3>
+              <p className="board-subtitle" style={{ color: colors.textMuted }}>
+                {board.isProtected && !isVerified ? "PIN required to open" : "Ready to manage notes"}
+              </p>
+            </div>
           </div>
-        )}
 
-        {/* Pinned Badge */}
-        {isPinned && (
-          <div
-            className="pinned-badge"
-            style={{ backgroundColor: colors.primary }}
-          >
-            ⭐ Pinned
+          <div className="board-card-badges">
+            {board.isProtected && (
+              <span
+                className="board-chip board-chip-danger"
+                style={{ backgroundColor: colors.danger }}
+              >
+                {isVerified ? "Unlocked" : "Protected"}
+              </span>
+            )}
+            {isPinned && (
+              <span
+                className="board-chip board-chip-primary"
+                style={{ backgroundColor: colors.primary }}
+              >
+                Pinned
+              </span>
+            )}
           </div>
-        )}
-
-        {/* Board Header */}
-        <div className="board-card-header">
-          <div
-            className="board-color-indicator"
-            style={{ backgroundColor: board.color || colors.primary }}
-          />
-          <h3 className="board-title" style={{ color: colors.text }}>
-            {truncateText(board.name, 25)}
-          </h3>
         </div>
 
-        {/* Board Description */}
-        {board.description && (
+        <div className="board-card-body">
           <p className="board-description" style={{ color: colors.textMuted }}>
-            {truncateText(board.description, 50)}
+            {board.description
+              ? truncateText(board.description, 120)
+              : "Use this board to organize related notes, files, and protected content."}
           </p>
-        )}
+        </div>
 
-        {/* Board Meta */}
         <div
           className="board-meta"
           style={{ color: colors.textMuted, borderTopColor: colors.border }}
         >
-          <small>Created: {formatDate(board.createdAt)}</small>
+          <small>Created {formatDate(board.createdAt) || "recently"}</small>
+          <small>{board.isProtected ? "Secure board" : "Open board"}</small>
         </div>
 
-        {/* Action Buttons */}
         <div className="board-actions">
-          <button
-            className="btn btn-sm btn-outline"
-            onMouseDown={(e) => e.stopPropagation()}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleViewNotes();
-            }}
-            style={
-              !isVerified
-                ? {
-                    borderColor: colors.primary,
-                    color: colors.primary,
-                  }
-                : {}
-            }
-          >
-            📋 View Notes
+          <button className="btn btn-primary btn-sm board-action-main" onClick={handleViewNotes}>
+            View Notes
           </button>
-
-          {isVerified && (
-            <>
-              <button
-                className="btn btn-sm btn-ghost"
-                onClick={handleEdit}
-                title="Edit board"
-              >
-                ✏️
-              </button>
-
-              <button
-                className="btn btn-sm btn-ghost"
-                onClick={() => onPin(board.id)}
-                title={isPinned ? "Unpin board" : "Pin board"}
-                style={{ color: isPinned ? colors.primary : colors.textMuted }}
-              >
-                {isPinned ? "⭐" : "☆"}
-              </button>
-
-              <button
-                className="btn btn-sm btn-ghost"
-                onClick={() => onDelete(board.id)}
-                title="Delete board"
-                style={{ color: colors.danger }}
-              >
-                🗑️
-              </button>
-            </>
-          )}
+          <button className="btn btn-outline btn-sm" onClick={handleEdit}>
+            Edit
+          </button>
+          <button
+            className="btn btn-ghost btn-sm"
+            onClick={handleTogglePin}
+            style={{ color: isPinned ? colors.primary : colors.textMuted }}
+            title={isPinned ? "Unpin board" : "Pin board"}
+          >
+            {isPinned ? "★" : "☆"}
+          </button>
+          <button
+            className="btn btn-ghost btn-sm"
+            onClick={handleDelete}
+            style={{ color: colors.danger }}
+            title="Delete board"
+          >
+            Delete
+          </button>
         </div>
-      </div>
+      </article>
 
-      {/* PIN Verification Modal */}
       <PINModal
         isOpen={showPINModal}
-        onClose={() => setShowPINModal(false)}
+        onClose={() => {
+          setPendingAction(null);
+          setShowPINModal(false);
+        }}
         onSubmit={handlePINSubmit}
         title="Board Protected"
-        description={`This board is protected with a 4-digit PIN. Enter the PIN to continue.`}
+        description="Enter the 4-digit PIN to continue with this board."
       />
     </>
   );
