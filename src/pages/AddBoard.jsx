@@ -27,7 +27,7 @@ export default function AddBoard({ onSuccess }) {
   const [loading, setLoading] = useState(false);
 
   const { addBoard } = useBoard();
-  const { colors, boardColorPalette } = useTheme();
+  const { boardColorPalette } = useTheme();
 
   useEffect(() => {
     nameRef.current?.focus();
@@ -37,7 +37,7 @@ export default function AddBoard({ onSuccess }) {
     if (pinError && pin === pinConfirm) {
       setPinError(false);
     }
-  }, [pin, pinConfirm]);
+  }, [pin, pinConfirm, pinError]);
 
   if (!currentUser) {
     return (

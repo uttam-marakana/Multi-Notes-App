@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Navigate,
   useLocation,
@@ -11,17 +11,41 @@ import { useAuth } from "../contexts/AuthContext";
 import { useNote } from "../contexts/NoteContext";
 import { useTheme } from "../contexts/ThemeContext";
 import PinInput from "../components/PinInput";
+import PINModal from "../components/PINModal";
+import {
+  grantProtectedAccess,
+  hasProtectedAccess,
+  verifyPIN,
+} from "../utils/helpers";
 
 export default function NoteEdit() {
   const { id: noteId } = useParams();
   const [searchParams] = useSearchParams();
   const boardId = searchParams.get("boardId");
-  const [pinError, setPinError] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { currentUser } = useAuth();
-  const { notes, updateNote } = useNote();
+  const { notes, updateNote, fetchNotes, loading: notesLoading } = useNote();
   const { colors, priorityColors } = useTheme();
+
+  const titleRef = useRef();
+  const contentRef = useRef();
+
+  const [priority, setPriority] = useState("low");
+  const [isProtected, setIsProtected] = useState(false);
+  const [pin, setPin] = useState("");
+  const [pinConfirm, setPinConfirm] = useState("");
+  const [existingFiles, setExistingFiles] = useState([]);
+  const [newFiles, setNewFiles] = useState([]);
+  const [removedFiles, setRemovedFiles] = useState([]);
+  const [fileError, setFileError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [showPINModal, setShowPINModal] = useState(false);
+  const [requestedNotes, setRequestedNotes] = useState(false);
+  const [isUnlocked, setIsUnlocked] = useState(
+    !noteId || hasProtectedAccess("note", noteId),
+  );
+  const note = notes.find((item) => item.id === noteId);
 
   if (!currentUser) {
     return (
@@ -34,22 +58,28 @@ export default function NoteEdit() {
     );
   }
 
-  const titleRef = useRef();
-  const contentRef = useRef();
-  const [priority, setPriority] = useState("low");
-  const [isProtected, setIsProtected] = useState(false);
-  const [pin, setPin] = useState("");
-  const [pinConfirm, setPinConfirm] = useState("");
-  const [existingFiles, setExistingFiles] = useState([]);
-  const [newFiles, setNewFiles] = useState([]);
-  const [removedFiles, setRemovedFiles] = useState([]);
-  const [fileError, setFileError] = useState("");
-  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    if (!boardId) return undefined;
+    setRequestedNotes(true);
+    return fetchNotes(boardId);
+  }, [boardId, fetchNotes]);
 
-  const note = notes.find((n) => n.id === noteId);
+  useEffect(() => {
+    if (!note) return;
 
-  const handleFileChange = (e) => {
-    const files = Array.from(e.target.files || []);
+    titleRef.current.value = note.title || "";
+    contentRef.current.value = note.content || "";
+    setPriority(note.priority || "low");
+    setIsProtected(note.isProtected || false);
+    setExistingFiles(note.files || []);
+
+    const verified = !note.isProtected || hasProtectedAccess("note", note.id);
+    setIsUnlocked(verified);
+    setShowPINModal(note.isProtected && !verified);
+  }, [note]);
+
+  const handleFileChange = (event) => {
+    const files = Array.from(event.target.files || []);
     const allowedFiles = files.filter((file) =>
       [
         "image/jpeg",
@@ -67,7 +97,7 @@ export default function NoteEdit() {
     }
 
     setNewFiles((prev) => [...prev, ...allowedFiles].slice(0, 10));
-    e.target.value = null;
+    event.target.value = null;
   };
 
   const removeExistingFile = (filePath) => {
@@ -79,18 +109,9 @@ export default function NoteEdit() {
     setNewFiles((prev) => prev.filter((file) => file.name !== fileName));
   };
 
-  useEffect(() => {
-    if (note) {
-      titleRef.current.value = note.title || "";
-      contentRef.current.value = note.content || "";
-      setPriority(note.priority || "low");
-      setIsProtected(note.isProtected || false);
-      setExistingFiles(note.files || []);
-    }
-  }, [note]);
+  const handleSubmit = async (event) => {
+    event.preventDefault();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
     if (!note || !boardId) {
       toast.error("Note or Board ID missing");
       return;
@@ -104,12 +125,13 @@ export default function NoteEdit() {
       return;
     }
 
-    if (isProtected) {
-      if (pin && pin.length !== 4) {
+    if (isProtected && pin) {
+      if (pin.length !== 4) {
         toast.error("PIN must be 4 digits");
         return;
       }
-      if (pin && pin !== pinConfirm) {
+
+      if (pin !== pinConfirm) {
         toast.error("PINs do not match");
         return;
       }
@@ -122,13 +144,13 @@ export default function NoteEdit() {
         content,
         priority,
         isProtected,
-        pin: isProtected ? pin || note.pin : null,
+        pin: isProtected ? (pin || undefined) : null,
         newFiles,
         removeFiles: removedFiles,
         files: existingFiles,
       });
 
-      toast.success("Note updated successfully!");
+      toast.success("Note updated successfully");
       navigate(-1);
     } catch (error) {
       toast.error(error.message || "Failed to update note");
@@ -137,6 +159,25 @@ export default function NoteEdit() {
     }
   };
 
+  const handlePINSubmit = async (enteredPIN) => {
+    if (!note || !verifyPIN(enteredPIN, note.pin)) {
+      throw new Error("Invalid PIN");
+    }
+
+    grantProtectedAccess("note", note.id);
+    setIsUnlocked(true);
+    setShowPINModal(false);
+  };
+
+  if (!requestedNotes || notesLoading) {
+    return (
+      <div style={{ padding: "2rem", textAlign: "center" }}>
+        <div className="spinner" style={{ marginBottom: "1rem" }}></div>
+        <h2>Loading note...</h2>
+      </div>
+    );
+  }
+
   if (!note) {
     return (
       <div style={{ padding: "2rem", textAlign: "center" }}>
@@ -144,6 +185,40 @@ export default function NoteEdit() {
         <button className="btn btn-primary" onClick={() => navigate(-1)}>
           Go Back
         </button>
+      </div>
+    );
+  }
+
+  if (note.isProtected && !isUnlocked) {
+    return (
+      <div
+        className="add-note-container glass-container"
+        style={{ backgroundColor: colors.background }}
+      >
+        <div className="container">
+          <div className="add-note-card glass-card">
+            <h2 style={{ color: colors.text }}>Note Protected</h2>
+            <p style={{ color: colors.textMuted }}>
+              Enter the note PIN to continue editing.
+            </p>
+            <div className="form-actions">
+              <button className="btn btn-primary" onClick={() => setShowPINModal(true)}>
+                Unlock Note
+              </button>
+              <button className="btn btn-outline" onClick={() => navigate(-1)}>
+                Back
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <PINModal
+          isOpen={showPINModal}
+          onClose={() => navigate(-1)}
+          onSubmit={handlePINSubmit}
+          title="Note Protected"
+          description="Enter the current note PIN to continue editing."
+        />
       </div>
     );
   }
@@ -161,7 +236,7 @@ export default function NoteEdit() {
             borderColor: colors.border,
           }}
         >
-          <h2 style={{ color: colors.text }}>✏️ Edit Note</h2>
+          <h2 style={{ color: colors.text }}>Edit Note</h2>
 
           <form onSubmit={handleSubmit} className="add-note-form">
             <div className="form-group">
@@ -194,27 +269,30 @@ export default function NoteEdit() {
             <div className="form-group">
               <label style={{ color: colors.text }}>Priority</label>
               <div className="priority-selector">
-                {["low", "medium", "high"].map((p) => (
+                {["low", "medium", "high"].map((level) => (
                   <button
-                    key={p}
+                    key={level}
                     type="button"
-                    className={`priority-btn ${priority === p ? "active" : ""}`}
-                    onClick={() => setPriority(p)}
+                    className={`priority-btn ${priority === level ? "active" : ""}`}
+                    onClick={() => setPriority(level)}
                     style={{
                       backgroundColor:
-                        priority === p ? priorityColors[p] : colors.background,
+                        priority === level
+                          ? priorityColors[level]
+                          : colors.background,
                       borderColor:
-                        priority === p ? priorityColors[p] : colors.border,
-                      color: priority === p ? "white" : colors.text,
+                        priority === level
+                          ? priorityColors[level]
+                          : colors.border,
+                      color: priority === level ? "white" : colors.text,
                     }}
                   >
-                    {p.toUpperCase()}
+                    {level.toUpperCase()}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* PROTECTION SYSTEM */}
             <div className="form-group">
               <label style={{ color: colors.text }}>Security</label>
 
@@ -223,13 +301,13 @@ export default function NoteEdit() {
                 onClick={() => setIsProtected((prev) => !prev)}
                 role="button"
                 tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") setIsProtected((prev) => !prev);
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") setIsProtected((prev) => !prev);
                 }}
               >
                 <div className="advanced-header">
                   <div className="flex items-center gap-2">
-                    🔒 <span>Protect Note</span>
+                    <span>Protect Note</span>
                   </div>
                   <div className="advanced-status">
                     {isProtected ? "Enabled" : "Off"}
@@ -238,10 +316,10 @@ export default function NoteEdit() {
 
                 <div
                   className={`pin-wrapper ${isProtected ? "open" : ""}`}
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(event) => event.stopPropagation()}
                 >
                   {isProtected && (
-                    <div className={`pin-group ${pinError ? "pin-error" : ""}`}>
+                    <div className="pin-group">
                       <PinInput
                         label="New PIN"
                         value={pin}
@@ -256,12 +334,16 @@ export default function NoteEdit() {
                       />
 
                       {pin && pinConfirm && pin === pinConfirm && (
-                        <div className="pin-success">✅ PIN updated</div>
+                        <div className="pin-success">PIN updated</div>
                       )}
 
                       {pin && pinConfirm && pin !== pinConfirm && (
-                        <small className="text-danger">⚠️ PIN mismatch</small>
+                        <small className="text-danger">PIN mismatch</small>
                       )}
+
+                      <small className="text-muted">
+                        Leave the PIN fields empty to keep the current PIN.
+                      </small>
                     </div>
                   )}
                 </div>
@@ -316,9 +398,7 @@ export default function NoteEdit() {
                       <button
                         type="button"
                         className="btn btn-sm btn-ghost"
-                        onClick={() =>
-                          removeExistingFile(file.path || file.url)
-                        }
+                        onClick={() => removeExistingFile(file.path || file.url)}
                         style={{ color: colors.danger }}
                       >
                         Remove

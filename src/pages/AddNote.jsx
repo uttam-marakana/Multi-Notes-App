@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
   Navigate,
   useLocation,
@@ -8,18 +8,38 @@ import {
 import toast from "react-hot-toast";
 import { useAuth } from "../contexts/AuthContext";
 import { useNote } from "../contexts/NoteContext";
+import { useBoard } from "../contexts/BoardContext";
 import { useTheme } from "../contexts/ThemeContext";
 import PinInput from "../components/PinInput";
+import PINModal from "../components/PINModal";
+import {
+  grantProtectedAccess,
+  hasProtectedAccess,
+  verifyPIN,
+} from "../utils/helpers";
 
 export default function AddNote() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const [pinError, setPinError] = useState(false);
   const boardId = searchParams.get("boardId");
   const { addNote } = useNote();
+  const { boards } = useBoard();
   const { colors, priorityColors } = useTheme();
+  const board = boards.find((item) => item.id === boardId);
+  const [showBoardPIN, setShowBoardPIN] = useState(
+    Boolean(board?.isProtected && !hasProtectedAccess("board", boardId)),
+  );
+  const titleRef = useRef();
+  const contentRef = useRef();
+  const [priority, setPriority] = useState("low");
+  const [isProtected, setIsProtected] = useState(false);
+  const [pin, setPin] = useState("");
+  const [pinConfirm, setPinConfirm] = useState("");
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [fileError, setFileError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   if (!currentUser) {
     return (
@@ -32,15 +52,7 @@ export default function AddNote() {
     );
   }
 
-  const titleRef = useRef();
-  const contentRef = useRef();
-  const [priority, setPriority] = useState("low");
-  const [isProtected, setIsProtected] = useState(false);
-  const [pin, setPin] = useState("");
-  const [pinConfirm, setPinConfirm] = useState("");
-  const [selectedFiles, setSelectedFiles] = useState([]);
-  const [fileError, setFileError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const boardLocked = Boolean(board?.isProtected && !hasProtectedAccess("board", boardId));
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files || []);
@@ -75,6 +87,11 @@ export default function AddNote() {
 
     if (!boardId) {
       toast.error("Board ID is required");
+      return;
+    }
+
+    if (boardLocked) {
+      setShowBoardPIN(true);
       return;
     }
 
@@ -114,6 +131,15 @@ export default function AddNote() {
     }
   };
 
+  const handleBoardPINSubmit = async (enteredPIN) => {
+    if (!board || !verifyPIN(enteredPIN, board.pin)) {
+      throw new Error("Invalid PIN");
+    }
+
+    grantProtectedAccess("board", board.id);
+    setShowBoardPIN(false);
+  };
+
   return (
     <div
       className="add-note-container glass-container"
@@ -128,6 +154,12 @@ export default function AddNote() {
           }}
         >
           <h2 style={{ color: colors.text }}>📝 Create New Note</h2>
+
+          {boardLocked && (
+            <div className="alert alert-warning">
+              Unlock this protected board before creating a note.
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="add-note-form">
             <div className="form-group">
@@ -310,6 +342,14 @@ export default function AddNote() {
           </form>
         </div>
       </div>
+
+      <PINModal
+        isOpen={showBoardPIN}
+        onClose={() => setShowBoardPIN(false)}
+        onSubmit={handleBoardPINSubmit}
+        title="Board Protected"
+        description="Enter the board PIN before creating a note."
+      />
     </div>
   );
 }
