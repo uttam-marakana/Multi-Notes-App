@@ -13,6 +13,78 @@ export function verifyPIN(enteredPin, storedHash) {
   return hashPIN(enteredPin) === storedHash;
 }
 
+const PROTECTED_ACCESS_KEY = "noteflow-protected-access";
+
+function readProtectedAccess() {
+  if (typeof window === "undefined") {
+    return {};
+  }
+
+  try {
+    const raw = sessionStorage.getItem(PROTECTED_ACCESS_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeProtectedAccess(accessMap) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  sessionStorage.setItem(PROTECTED_ACCESS_KEY, JSON.stringify(accessMap));
+}
+
+export function hasProtectedAccess(type, id) {
+  if (!type || !id) return false;
+
+  const accessMap = readProtectedAccess();
+  return Boolean(accessMap?.[type]?.[id]);
+}
+
+export function grantProtectedAccess(type, id) {
+  if (!type || !id) return;
+
+  const accessMap = readProtectedAccess();
+  accessMap[type] = {
+    ...(accessMap[type] || {}),
+    [id]: true,
+  };
+
+  writeProtectedAccess(accessMap);
+}
+
+export function revokeProtectedAccess(type, id) {
+  if (!type || !id) return;
+
+  const accessMap = readProtectedAccess();
+  if (!accessMap[type]) return;
+
+  delete accessMap[type][id];
+
+  if (Object.keys(accessMap[type]).length === 0) {
+    delete accessMap[type];
+  }
+
+  writeProtectedAccess(accessMap);
+}
+
+function toDateObject(date) {
+  if (!date) return null;
+
+  if (date instanceof Date) {
+    return date;
+  }
+
+  if (typeof date?.toDate === "function") {
+    return date.toDate();
+  }
+
+  const parsed = new Date(date);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
 export const getPriorityColor = (priority, priorityColors) => {
   return priorityColors[priority] || priorityColors.low;
 };
@@ -27,8 +99,9 @@ export const getPriorityLabel = (priority) => {
 };
 
 export const formatDate = (date) => {
-  if (!date) return "";
-  const d = new Date(date);
+  const d = toDateObject(date);
+  if (!d) return "";
+
   return d.toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",
@@ -37,8 +110,9 @@ export const formatDate = (date) => {
 };
 
 export const formatDateTime = (date) => {
-  if (!date) return "";
-  const d = new Date(date);
+  const d = toDateObject(date);
+  if (!d) return "";
+
   return d.toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",
@@ -64,6 +138,7 @@ export const isFileTypeAllowed = (fileType) => {
 };
 
 export const getFileIcon = (fileType) => {
+  if (!fileType) return "📎";
   if (fileType.startsWith("image/")) return "🖼️";
   if (fileType === "application/pdf") return "📄";
   return "📎";
