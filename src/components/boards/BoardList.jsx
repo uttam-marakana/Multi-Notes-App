@@ -1,4 +1,3 @@
-import { Droppable, Draggable } from "react-beautiful-dnd";
 import { useTheme } from "../../contexts/ThemeContext";
 import BoardCard from "./BoardCard";
 
@@ -40,48 +39,24 @@ const BoardList = ({ boards, onDelete, onPin }) => {
         </div>
       )}
 
-      {/* 📦 DRAGGABLE BOARDS */}
+      {/* 📦 BOARDS */}
       <div className="board-section">
         <h3 style={{ color: colors.text }}>Your Boards</h3>
 
-        <Droppable droppableId="boards" direction="horizontal">
-          {(provided) => (
-            <div
-              className="board-grid"
-              ref={provided.innerRef}
-              {...provided.droppableProps}
-            >
-              {unpinnedBoards.map((board, index) => {
-                if (!board?.id) return null;
+        <div className="board-grid">
+          {unpinnedBoards.map((board) => {
+            if (!board?.id) return null;
 
-                return (
-                  <Draggable
-                    key={board.id}
-                    draggableId={String(board.id)} // ✅ CRITICAL FIX
-                    index={index}
-                  >
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                      >
-                        <BoardCard
-                          board={board}
-                          onDelete={onDelete}
-                          onPin={onPin}
-                          isDragging={snapshot.isDragging}
-                        />
-                      </div>
-                    )}
-                  </Draggable>
-                );
-              })}
-
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
+            return (
+              <BoardCard
+                key={board.id}
+                board={board}
+                onDelete={onDelete}
+                onPin={onPin}
+              />
+            );
+          })}
+        </div>
       </div>
     </div>
   );

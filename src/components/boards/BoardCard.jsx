@@ -42,6 +42,10 @@ export default function BoardCard({
       setShowPINModal(true);
       return;
     }
+    setTimeout(() => {
+      navigate(`/notes?boardId=${board.id}`);
+    }, 0);
+
     if (!currentUser) {
       toast.error("Please login to view notes");
       navigate(`/login?redirect=/notes?boardId=${board.id}`);
@@ -124,7 +128,11 @@ export default function BoardCard({
         <div className="board-actions">
           <button
             className="btn btn-sm btn-outline"
-            onClick={handleViewNotes}
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleViewNotes();
+            }}
             style={
               !isVerified
                 ? {
