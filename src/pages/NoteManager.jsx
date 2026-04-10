@@ -13,6 +13,7 @@ import {
 } from "../utils/helpers";
 import ConfirmationModal from "../components/ConfirmationModal";
 import PINModal from "../components/PINModal";
+import PageBackButton from "../components/PageBackButton";
 import NoteList from "../components/notes/NoteList";
 
 export default function NoteManager() {
@@ -240,6 +241,7 @@ export default function NoteManager() {
       style={{ backgroundColor: colors.background }}
     >
       <div className="container">
+        <PageBackButton fallback="/" />
         <div className="note-manager-header glass-card">
           <div>
             <h2 style={{ color: colors.text, margin: 0 }}>{board.name}</h2>

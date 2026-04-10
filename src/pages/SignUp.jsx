@@ -4,6 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { Link, useNavigate } from "react-router-dom";
 import ThemeToggle from "../components/ThemeToggle";
+import PageBackButton from "../components/PageBackButton";
 import { RiEye2Line, RiEyeCloseFill } from "react-icons/ri";
 
 export default function SignUp() {
@@ -63,10 +64,13 @@ export default function SignUp() {
   return (
     <div className="auth-page" style={{ backgroundColor: colors.background }}>
       <div className="auth-header">
-        <h1 className="auth-brand" style={{ color: colors.primary }}>
-          Noteflow
-        </h1>
-        <ThemeToggle />
+        <PageBackButton fallback="/" label="Back" />
+        <div className="auth-header-actions">
+          <h1 className="auth-brand" style={{ color: colors.primary }}>
+            Noteflow
+          </h1>
+          <ThemeToggle />
+        </div>
       </div>
 
       <div className="auth-container">

@@ -12,6 +12,7 @@ import { useNote } from "../contexts/NoteContext";
 import { useTheme } from "../contexts/ThemeContext";
 import PinInput from "../components/PinInput";
 import PINModal from "../components/PINModal";
+import PageBackButton from "../components/PageBackButton";
 import {
   grantProtectedAccess,
   hasProtectedAccess,
@@ -35,6 +36,7 @@ export default function NoteEdit() {
   const [isProtected, setIsProtected] = useState(false);
   const [pin, setPin] = useState("");
   const [pinConfirm, setPinConfirm] = useState("");
+  const [pinError, setPinError] = useState(false);
   const [existingFiles, setExistingFiles] = useState([]);
   const [newFiles, setNewFiles] = useState([]);
   const [removedFiles, setRemovedFiles] = useState([]);
@@ -77,6 +79,26 @@ export default function NoteEdit() {
     setIsUnlocked(verified);
     setShowPINModal(note.isProtected && !verified);
   }, [note]);
+
+  useEffect(() => {
+    if (pinError && pin === pinConfirm) {
+      setPinError(false);
+    }
+  }, [pin, pinConfirm, pinError]);
+
+  const toggleProtection = () => {
+    setIsProtected((prev) => {
+      const next = !prev;
+
+      if (!next) {
+        setPin("");
+        setPinConfirm("");
+        setPinError(false);
+      }
+
+      return next;
+    });
+  };
 
   const handleFileChange = (event) => {
     const files = Array.from(event.target.files || []);
@@ -127,11 +149,13 @@ export default function NoteEdit() {
 
     if (isProtected && pin) {
       if (pin.length !== 4) {
+        setPinError(true);
         toast.error("PIN must be 4 digits");
         return;
       }
 
       if (pin !== pinConfirm) {
+        setPinError(true);
         toast.error("PINs do not match");
         return;
       }
@@ -236,6 +260,7 @@ export default function NoteEdit() {
             borderColor: colors.border,
           }}
         >
+          <PageBackButton fallback={`/notes?boardId=${boardId || ""}`} />
           <h2 style={{ color: colors.text }}>Edit Note</h2>
 
           <form onSubmit={handleSubmit} className="add-note-form">
@@ -298,11 +323,11 @@ export default function NoteEdit() {
 
               <div
                 className={`advanced-box ${isProtected ? "active" : ""}`}
-                onClick={() => setIsProtected((prev) => !prev)}
+                onClick={toggleProtection}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(event) => {
-                  if (event.key === "Enter") setIsProtected((prev) => !prev);
+                  if (event.key === "Enter") toggleProtection();
                 }}
               >
                 <div className="advanced-header">
@@ -319,7 +344,7 @@ export default function NoteEdit() {
                   onClick={(event) => event.stopPropagation()}
                 >
                   {isProtected && (
-                    <div className="pin-group">
+                    <div className={`pin-group ${pinError ? "pin-error" : ""}`}>
                       <PinInput
                         label="New PIN"
                         value={pin}
