@@ -9,11 +9,10 @@ import ConfirmationModal from "../components/ConfirmationModal";
 import AddBoard from "./AddBoard";
 import BoardList from "../components/boards/BoardList";
 import { MdOutlineAddCircleOutline } from "react-icons/md";
-import { DragDropContext } from "react-beautiful-dnd";
 
 export default function BoardManager() {
   const { currentUser } = useAuth();
-  const { boards, deleteBoard, updateBoardOrder, toggleBoardPin, loading } =
+  const { boards, deleteBoard, toggleBoardPin, loading } =
     useBoard();
 
   const { colors } = useTheme();
@@ -88,50 +87,6 @@ export default function BoardManager() {
     }
   };
 
-  /* ------ REORDER ----------------------------- */
-  const handleReorder = useCallback(
-    async (boardIds) => {
-      if (!currentUser) {
-        const reordered = boardIds.map((id) =>
-          guestBoards.find((b) => b.id === id),
-        );
-        setGuestBoards(reordered);
-        guestStorage.saveBoards(reordered);
-        return;
-      }
-
-      try {
-        await updateBoardOrder(boardIds);
-        toast.success("Boards reordered!");
-      } catch {
-        toast.error("Failed to reorder boards.");
-      }
-    },
-    [currentUser, guestBoards, updateBoardOrder],
-  );
-
-  /* ------ DRAG END (CORE FIX) ----------------------------- */
-  const handleDragEnd = useCallback(
-    (result) => {
-      const { source, destination } = result;
-
-      if (!destination) return;
-      if (source.index === destination.index) return;
-
-      // 🔥 Only reorder unpinned boards
-      const unpinned = displayBoards.filter(
-        (b) => !b.pinnedBy?.includes(currentUser?.uid),
-      );
-
-      const reordered = Array.from(unpinned);
-      const [moved] = reordered.splice(source.index, 1);
-      reordered.splice(destination.index, 0, moved);
-
-      handleReorder(reordered.map((b) => b.id));
-    },
-    [displayBoards, currentUser, handleReorder],
-  );
-
   /* ------ CREATE BOARD ----------------------------- */
   const handleCreateBoard = () => {
     if (!currentUser) {
@@ -179,13 +134,11 @@ export default function BoardManager() {
 
       {/* BOARDS */}
       {!loading && displayBoards.length > 0 && (
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <BoardList
-            boards={displayBoards}
-            onDelete={handleDelete}
-            onPin={handlePin}
-          />
-        </DragDropContext>
+        <BoardList
+          boards={displayBoards}
+          onDelete={handleDelete}
+          onPin={handlePin}
+        />
       )}
 
       {/* EMPTY STATE */}
