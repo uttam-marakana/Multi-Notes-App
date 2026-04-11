@@ -142,8 +142,10 @@ export default function AddNote() {
         title,
         content,
         priority,
-        isProtected,
+        isProtected: board?.isProtected ? true : isProtected,
         pin: isProtected ? pin : null,
+        pinHash:
+          board?.isProtected && !isProtected && board?.pin ? board.pin : null,
         files: selectedFiles,
       });
 

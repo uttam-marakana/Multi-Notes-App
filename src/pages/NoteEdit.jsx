@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAuth } from "../contexts/AuthContext";
+import { useBoard } from "../contexts/BoardContext";
 import { useNote } from "../contexts/NoteContext";
 import { useTheme } from "../contexts/ThemeContext";
 import PinInput from "../components/PinInput";
@@ -17,6 +18,7 @@ import {
   grantProtectedAccess,
   hasProtectedAccess,
   verifyPIN,
+  verifyProtectedPIN,
 } from "../utils/helpers";
 
 export default function NoteEdit() {
@@ -26,6 +28,7 @@ export default function NoteEdit() {
   const navigate = useNavigate();
   const location = useLocation();
   const { currentUser } = useAuth();
+  const { boards } = useBoard();
   const { notes, updateNote, fetchNotes, loading: notesLoading } = useNote();
   const { colors, priorityColors } = useTheme();
 
@@ -48,6 +51,7 @@ export default function NoteEdit() {
     !noteId || hasProtectedAccess("note", noteId),
   );
   const note = notes.find((item) => item.id === noteId);
+  const board = boards.find((item) => item.id === boardId);
 
   useEffect(() => {
     if (!boardId) return undefined;
@@ -168,7 +172,7 @@ export default function NoteEdit() {
         content,
         priority,
         isProtected,
-        pin: isProtected ? (pin || undefined) : null,
+        pin: isProtected ? pin || undefined : null,
         newFiles,
         removeFiles: removedFiles,
         files: existingFiles,
@@ -184,7 +188,9 @@ export default function NoteEdit() {
   };
 
   const handlePINSubmit = async (enteredPIN) => {
-    if (!note || !verifyPIN(enteredPIN, note.pin)) {
+    const boardPinHash = board?.isProtected ? board.pin : null;
+
+    if (!note || !verifyProtectedPIN(enteredPIN, note.pin, boardPinHash)) {
       throw new Error("Invalid PIN");
     }
 
@@ -226,7 +232,10 @@ export default function NoteEdit() {
               Enter the note PIN to continue editing.
             </p>
             <div className="form-actions">
-              <button className="btn btn-primary" onClick={() => setShowPINModal(true)}>
+              <button
+                className="btn btn-primary"
+                onClick={() => setShowPINModal(true)}
+              >
                 Unlock Note
               </button>
               <button className="btn btn-outline" onClick={() => navigate(-1)}>
@@ -423,7 +432,9 @@ export default function NoteEdit() {
                       <button
                         type="button"
                         className="btn btn-sm btn-ghost"
-                        onClick={() => removeExistingFile(file.path || file.url)}
+                        onClick={() =>
+                          removeExistingFile(file.path || file.url)
+                        }
                         style={{ color: colors.danger }}
                       >
                         Remove

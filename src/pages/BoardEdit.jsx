@@ -18,7 +18,10 @@ export default function BoardEdit() {
   const { boards, loading, updateBoard } = useBoard();
   const { colors, boardColorPalette } = useTheme();
 
-  const board = useMemo(() => boards.find((item) => item.id === id), [boards, id]);
+  const board = useMemo(
+    () => boards.find((item) => item.id === id),
+    [boards, id],
+  );
   const nameRef = useRef(null);
 
   const [name, setName] = useState("");
@@ -29,7 +32,9 @@ export default function BoardEdit() {
   const [pinConfirm, setPinConfirm] = useState("");
   const [saving, setSaving] = useState(false);
   const [showPINModal, setShowPINModal] = useState(false);
-  const [isUnlocked, setIsUnlocked] = useState(!id || hasProtectedAccess("board", id));
+  const [isUnlocked, setIsUnlocked] = useState(
+    !id || hasProtectedAccess("board", id),
+  );
 
   useEffect(() => {
     if (!board) return;
@@ -39,7 +44,8 @@ export default function BoardEdit() {
     setSelectedColor(board.color || "#3B82F6");
     setIsProtected(Boolean(board.isProtected));
 
-    const verified = !board.isProtected || hasProtectedAccess("board", board.id);
+    const verified =
+      !board.isProtected || hasProtectedAccess("board", board.id);
     setIsUnlocked(verified);
     setShowPINModal(board.isProtected && !verified);
   }, [board]);
@@ -81,7 +87,7 @@ export default function BoardEdit() {
         description: description.trim(),
         color: selectedColor,
         isProtected,
-        pin: isProtected ? (pin || undefined) : null,
+        pin: isProtected ? pin || undefined : null,
       });
 
       toast.success("Board updated successfully");
@@ -122,7 +128,10 @@ export default function BoardEdit() {
                 <p style={{ color: colors.textMuted }}>
                   The board you are trying to edit is unavailable.
                 </p>
-                <button className="btn btn-primary" onClick={() => navigate("/")}>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => navigate("/")}
+                >
                   Back to Dashboard
                 </button>
               </div>
@@ -143,10 +152,14 @@ export default function BoardEdit() {
           <div className="add-note-card glass-card">
             <h2 style={{ color: colors.text }}>Board Protected</h2>
             <p style={{ color: colors.textMuted }}>
-              Enter the board PIN to edit its details, color, and protection settings.
+              Enter the board PIN to edit its details, color, and protection
+              settings.
             </p>
             <div className="form-actions">
-              <button className="btn btn-primary" onClick={() => setShowPINModal(true)}>
+              <button
+                className="btn btn-primary"
+                onClick={() => setShowPINModal(true)}
+              >
                 Unlock Board
               </button>
               <button className="btn btn-outline" onClick={() => navigate("/")}>
@@ -158,7 +171,7 @@ export default function BoardEdit() {
 
         <PINModal
           isOpen={showPINModal}
-          onClose={() => navigate(-1)}
+          onClose={() => setShowPINModal(false)}
           onSubmit={handlePINSubmit}
           title="Board Protected"
           description="Enter the current board PIN to continue editing."
@@ -279,7 +292,11 @@ export default function BoardEdit() {
               >
                 Cancel
               </button>
-              <button type="submit" className="btn btn-primary" disabled={saving}>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={saving}
+              >
                 {saving ? "Saving..." : "Save Board"}
               </button>
             </div>
