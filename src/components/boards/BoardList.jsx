@@ -1,13 +1,19 @@
+import { useState } from "react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useAuth } from "../../contexts/AuthContext";
 import BoardCard from "./BoardCard";
+import PINModal from "../PINModal";
+import { verifyPIN, grantProtectedAccess } from "../../utils/helpers";
 
 const BoardList = ({ boards, onDelete, onPin }) => {
   const { colors } = useTheme();
   const { currentUser } = useAuth();
   const currentUserId = currentUser?.uid;
 
-  /* ------ SPLIT BOARDS ----------------------------- */
+  const [showPINModal, setShowPINModal] = useState(false);
+  const [selectedBoard, setSelectedBoard] = useState(null);
+  const [pendingAction, setPendingAction] = useState(null);
+
   const pinnedBoards = boards.filter((b) =>
     b.pinnedBy?.includes(currentUserId),
   );
@@ -16,50 +22,81 @@ const BoardList = ({ boards, onDelete, onPin }) => {
     (b) => !b.pinnedBy?.includes(currentUserId),
   );
 
+  const handleRequirePin = (board, action) => {
+    setSelectedBoard(board);
+    setPendingAction(() => action);
+    setShowPINModal(true);
+  };
+
+  const handlePINSubmit = async (pin) => {
+    if (!selectedBoard || !verifyPIN(pin, selectedBoard.pin)) {
+      throw new Error("Invalid PIN");
+    }
+
+    grantProtectedAccess("board", selectedBoard.id);
+
+    setShowPINModal(false);
+
+    const action = pendingAction;
+    setPendingAction(null);
+    setSelectedBoard(null);
+
+    action?.(); // 🔥 resume original flow
+  };
+
   return (
-    <div className="board-list-container">
-      {/* ⭐ PINNED BOARDS */}
-      {pinnedBoards.length > 0 && (
+    <>
+      <div className="board-list-container">
+        {pinnedBoards.length > 0 && (
+          <div className="board-section">
+            <h3 style={{ color: colors.text }}>⭐ Pinned Boards</h3>
+            <div className="board-grid">
+              {pinnedBoards.map((board) =>
+                board?.id ? (
+                  <BoardCard
+                    key={board.id}
+                    board={board}
+                    onDelete={onDelete}
+                    onPin={onPin}
+                    onRequirePin={handleRequirePin}
+                  />
+                ) : null,
+              )}
+            </div>
+          </div>
+        )}
+
         <div className="board-section">
-          <h3 style={{ color: colors.text }}>⭐ Pinned Boards</h3>
-
+          <h3 style={{ color: colors.text }}>Your Boards</h3>
           <div className="board-grid">
-            {pinnedBoards.map((board) => {
-              if (!board?.id) return null;
-
-              return (
+            {unpinnedBoards.map((board) =>
+              board?.id ? (
                 <BoardCard
                   key={board.id}
                   board={board}
                   onDelete={onDelete}
                   onPin={onPin}
+                  onRequirePin={handleRequirePin}
                 />
-              );
-            })}
+              ) : null,
+            )}
           </div>
         </div>
-      )}
-
-      {/* 📦 BOARDS */}
-      <div className="board-section">
-        <h3 style={{ color: colors.text }}>Your Boards</h3>
-
-        <div className="board-grid">
-          {unpinnedBoards.map((board) => {
-            if (!board?.id) return null;
-
-            return (
-              <BoardCard
-                key={board.id}
-                board={board}
-                onDelete={onDelete}
-                onPin={onPin}
-              />
-            );
-          })}
-        </div>
       </div>
-    </div>
+
+      {/* 🔥 SINGLE GLOBAL PIN MODAL */}
+      <PINModal
+        isOpen={showPINModal}
+        onClose={() => {
+          setShowPINModal(false);
+          setPendingAction(null);
+          setSelectedBoard(null);
+        }}
+        onSubmit={handlePINSubmit}
+        title="Board Protected"
+        description="Enter PIN to continue"
+      />
+    </>
   );
 };
 
