@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useAuth } from "../../contexts/AuthContext";
+import { useBoard } from "../../contexts/BoardContext";
 import PINModal from "../PINModal";
 import {
   getPriorityColor,
@@ -8,13 +9,14 @@ import {
   formatDate,
   getFileIcon,
   formatFileSize,
-  verifyPIN,
+  verifyProtectedPIN,
   grantProtectedAccess,
   hasProtectedAccess,
 } from "../../utils/helpers";
 
 export default function NoteCard({
   note,
+  boardId,
   onEdit,
   onDelete,
   onPin,
@@ -22,6 +24,7 @@ export default function NoteCard({
 }) {
   const { colors, priorityColors } = useTheme();
   const { currentUser } = useAuth();
+  const { boards } = useBoard();
   const [showPINModal, setShowPINModal] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
   const [isVerified, setIsVerified] = useState(
@@ -29,8 +32,12 @@ export default function NoteCard({
   );
 
   const currentUserId = currentUser?.uid;
+  const board = boards.find((item) => item.id === boardId);
+  const boardPinHash = board?.isProtected ? board.pin : null;
   const isOwner = !note.ownerId || note.ownerId === currentUserId;
-  const isPinned = Boolean(currentUserId && note.pinnedBy?.includes(currentUserId));
+  const isPinned = Boolean(
+    currentUserId && note.pinnedBy?.includes(currentUserId),
+  );
   const priorityColor = getPriorityColor(note.priority, priorityColors);
 
   useEffect(() => {
@@ -63,7 +70,7 @@ export default function NoteCard({
   };
 
   const handlePINSubmit = async (pin) => {
-    if (!verifyPIN(pin, note.pin)) {
+    if (!verifyProtectedPIN(pin, note.pin, boardPinHash)) {
       throw new Error("Invalid PIN");
     }
 
@@ -183,7 +190,9 @@ export default function NoteCard({
         >
           <small>{formatDate(note.createdAt) || "recently updated"}</small>
           <small>{note.priority || "low"} priority</small>
-          {note.files?.length > 0 && <small>{note.files.length} attachment(s)</small>}
+          {note.files?.length > 0 && (
+            <small>{note.files.length} attachment(s)</small>
+          )}
         </div>
 
         <div className="note-actions">
