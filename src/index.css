@@ -590,21 +590,23 @@ textarea::placeholder {
 /* ----- MODALS ---------------------------- */
 
 .modal-overlay {
-  position: fixed;
-  inset: 0;
+  position: fixed !important;
+  inset: 0 !important;
   padding: var(--spacing-lg);
   background: linear-gradient(
     135deg,
-    rgba(0, 0, 0, 0.4) 0%,
-    rgba(0, 0, 0, 0.2) 100%
+    rgba(0, 0, 0, 0.75) 0%,
+    rgba(0, 0, 0, 0.45) 100%
   );
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
+  z-index: 99999 !important;
   animation: fadeIn 0.3s ease;
+  overflow-y: auto;
+  pointer-events: auto;
 }
 
 .modal {
@@ -614,24 +616,26 @@ textarea::placeholder {
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   box-shadow:
-    0 20px 60px rgba(0, 0, 0, 0.3),
+    0 24px 80px rgba(0, 0, 0, 0.45),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  max-width: 500px;
-  width: min(100%, 500px);
-  max-height: 90vh;
+  max-width: 520px;
+  width: min(100%, 520px);
+  max-height: calc(100vh - 2rem);
   overflow-y: auto;
   animation: rotateIn 0.4s cubic-bezier(0.23, 1, 0.32, 1);
   position: relative;
-  z-index: 2001;
+  z-index: 100000 !important;
+  display: flex;
+  flex-direction: column;
 }
 
 .pin-modal {
-  max-width: 440px;
+  max-width: 460px;
   background:
     linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.96),
-      rgba(255, 255, 255, 0.92)
+      rgba(255, 255, 255, 0.98),
+      rgba(255, 255, 255, 0.94)
     ),
     var(--glass-bg);
 }
@@ -709,18 +713,33 @@ textarea::placeholder {
 
 .pin-modal-inputs {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(72px, 1fr));
   gap: var(--spacing-md);
+  max-width: 420px;
+  margin: 0 auto;
 }
 
 .pin-modal-digit {
   width: 100%;
+  min-width: 72px;
   min-height: 72px;
+  padding: 0;
   text-align: center;
   font-size: 1.75rem;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.18em;
   font-weight: 700;
   margin: 0;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  background: var(--color-background);
+  color: var(--color-text);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.pin-modal-digit:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
 }
 
 /* ----- ALERTS & NOTIFICATIONS ---------------------------- */
