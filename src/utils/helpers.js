@@ -18,6 +18,13 @@ export function verifyPIN(enteredPin, storedHash) {
   return hashPIN(enteredPin) === storedHash;
 }
 
+export function verifyProtectedPIN(enteredPin, storedHash, fallbackHash) {
+  if (!enteredPin) return false;
+  if (storedHash && verifyPIN(enteredPin, storedHash)) return true;
+  if (fallbackHash && verifyPIN(enteredPin, fallbackHash)) return true;
+  return false;
+}
+
 const PROTECTED_ACCESS_KEY = "noteflow-protected-access";
 
 function readProtectedAccess() {
