@@ -32,32 +32,35 @@ export function NoteProvider({ children }) {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const uploadFiles = useCallback(async (boardId, files) => {
-    if (!currentUser || !files?.length) return [];
+  const uploadFiles = useCallback(
+    async (boardId, files) => {
+      if (!currentUser || !files?.length) return [];
 
-    const fileArray = Array.from(files).slice(0, 10);
-    const uploadedFiles = await Promise.all(
-      fileArray.map(async (file) => {
-        const safeName = file.name.replace(/\s+/g, "_");
-        const filePath = `${currentUser.uid}/boards/${boardId}/notes/${Date.now()}_${safeName}`;
-        const fileRef = storageRef(storage, filePath);
+      const fileArray = Array.from(files).slice(0, 10);
+      const uploadedFiles = await Promise.all(
+        fileArray.map(async (file) => {
+          const safeName = file.name.replace(/\s+/g, "_");
+          const filePath = `${currentUser.uid}/boards/${boardId}/notes/${Date.now()}_${safeName}`;
+          const fileRef = storageRef(storage, filePath);
 
-        const snapshot = await uploadBytesResumable(fileRef, file);
-        const url = await getDownloadURL(snapshot.ref);
+          const snapshot = await uploadBytesResumable(fileRef, file);
+          const url = await getDownloadURL(snapshot.ref);
 
-        return {
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          url,
-          path: snapshot.ref.fullPath,
-          uploadedAt: new Date().toISOString(),
-        };
-      }),
-    );
+          return {
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            url,
+            path: snapshot.ref.fullPath,
+            uploadedAt: new Date().toISOString(),
+          };
+        }),
+      );
 
-    return uploadedFiles;
-  }, [currentUser]);
+      return uploadedFiles;
+    },
+    [currentUser],
+  );
 
   const deleteStoredFiles = useCallback(async (files = []) => {
     if (!files.length) return;
@@ -71,41 +74,44 @@ export function NoteProvider({ children }) {
     return Promise.all(deletePromises);
   }, []);
 
-  const fetchNotes = useCallback((boardId) => {
-    if (!currentUser || !boardId) {
-      setNotes([]);
-      return;
-    }
+  const fetchNotes = useCallback(
+    (boardId) => {
+      if (!currentUser || !boardId) {
+        setNotes([]);
+        return;
+      }
 
-    setLoading(true);
-    const notesRef = collection(
-      db,
-      "users",
-      currentUser.uid,
-      "boards",
-      boardId,
-      "notes",
-    );
-    const q = query(notesRef, orderBy("order", "asc"));
+      setLoading(true);
+      const notesRef = collection(
+        db,
+        "users",
+        currentUser.uid,
+        "boards",
+        boardId,
+        "notes",
+      );
+      const q = query(notesRef, orderBy("order", "asc"));
 
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const notesData = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setNotes(notesData);
-        setLoading(false);
-      },
-      (error) => {
-        console.error("Error fetching notes:", error);
-        setLoading(false);
-      },
-    );
+      const unsubscribe = onSnapshot(
+        q,
+        (snapshot) => {
+          const notesData = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+          setNotes(notesData);
+          setLoading(false);
+        },
+        (error) => {
+          console.error("Error fetching notes:", error);
+          setLoading(false);
+        },
+      );
 
-    return unsubscribe;
-  }, [currentUser]);
+      return unsubscribe;
+    },
+    [currentUser],
+  );
 
   const addNote = async (boardId, noteData) => {
     if (!boardId || !currentUser) throw new Error("Invalid board or user");
@@ -120,7 +126,11 @@ export function NoteProvider({ children }) {
       priority: noteData.priority || "low", // low, medium, high
       pinnedBy: [],
       isProtected: noteData.isProtected || false,
-      pin: noteData.pin ? hashPIN(noteData.pin) : null,
+      pin: noteData.pinHash
+        ? noteData.pinHash
+        : noteData.pin
+          ? hashPIN(noteData.pin)
+          : null,
       contentType: noteData.contentType || ["text"],
       files: uploadedFiles,
       ownerId: currentUser.uid,
