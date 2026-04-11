@@ -16,6 +16,7 @@ import {
 } from "firebase/auth";
 
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
+import { revokeProtectedAccess } from "../utils/helpers";
 
 const AuthContext = createContext();
 
@@ -50,14 +51,12 @@ export function AuthProvider({ children }) {
 
   const resetTimeout = useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(async () => {
-      try {
-        await signOut(auth);
-        setCurrentUser(null);
-        console.log("Auto-logout due to inactivity");
-      } catch (error) {
-        console.error("Auto-logout error:", error.message);
+    timeoutRef.current = setTimeout(() => {
+      // Revoke all protected access after idle timeout
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem("noteflow-protected-access");
       }
+      console.log("Idle timeout: Protected access revoked");
     }, 300000); // 5 minutes
   }, []);
 
