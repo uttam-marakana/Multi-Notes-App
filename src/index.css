@@ -1803,7 +1803,7 @@ textarea::placeholder {
 }
 
 .page-back-button {
-  width: auto;
+  width: 12%;
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
