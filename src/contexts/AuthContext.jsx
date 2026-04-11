@@ -1,4 +1,11 @@
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+} from "react";
 import { auth, db } from "../config/firebase";
 
 import {
@@ -19,6 +26,7 @@ export function useAuth() {
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const timeoutRef = useRef(null);
 
   const buildUserProfile = useCallback(async (user) => {
     if (!user) return null;
@@ -40,6 +48,19 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
+  const resetTimeout = useCallback(() => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(async () => {
+      try {
+        await signOut(auth);
+        setCurrentUser(null);
+        console.log("Auto-logout due to inactivity");
+      } catch (error) {
+        console.error("Auto-logout error:", error.message);
+      }
+    }, 300000); // 5 minutes
+  }, []);
+
   // ✅ AUTO AUTH STATE SYNC
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -59,6 +80,31 @@ export function AuthProvider({ children }) {
 
     return unsubscribe;
   }, [buildUserProfile]);
+
+  // ✅ IDLE TIMEOUT LOGIC
+  useEffect(() => {
+    if (!currentUser) {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      return;
+    }
+
+    const events = [
+      "mousedown",
+      "mousemove",
+      "keypress",
+      "scroll",
+      "touchstart",
+    ];
+    const reset = () => resetTimeout();
+
+    events.forEach((event) => window.addEventListener(event, reset));
+    resetTimeout(); // Start the timer
+
+    return () => {
+      events.forEach((event) => window.removeEventListener(event, reset));
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, [currentUser, resetTimeout]);
 
   // ✅ SIGNUP
   const signUp = async (email, password, userDetails = {}) => {
