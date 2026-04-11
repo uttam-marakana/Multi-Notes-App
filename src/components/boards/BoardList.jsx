@@ -23,6 +23,7 @@ const BoardList = ({ boards, onDelete, onPin }) => {
   );
 
   const handleRequirePin = (board, action) => {
+    console.log("PIN modal opening for board:", board?.id, board?.name);
     setSelectedBoard(board);
     setPendingAction(() => action);
     setShowPINModal(true);
