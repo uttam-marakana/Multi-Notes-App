@@ -6,19 +6,14 @@ import { useNote } from "../contexts/NoteContext";
 import { useBoard } from "../contexts/BoardContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { guestStorage } from "../utils/guestStorage";
-import {
-  grantProtectedAccess,
-  hasProtectedAccess,
-  verifyPIN,
-} from "../utils/helpers";
 import ConfirmationModal from "../components/ConfirmationModal";
-import PINModal from "../components/PINModal";
 import PageBackButton from "../components/PageBackButton";
 import NoteList from "../components/notes/NoteList";
 
 export default function NoteManager() {
   const [searchParams] = useSearchParams();
   const boardId = searchParams.get("boardId");
+
   const navigate = useNavigate();
   const { currentUser } = useAuth();
   const {
@@ -29,19 +24,17 @@ export default function NoteManager() {
     updateNoteOrder,
     loading: notesLoading,
   } = useNote();
+
   const { boards, loading: boardsLoading } = useBoard();
   const { colors } = useTheme();
 
   const [guestNotes, setGuestNotes] = useState([]);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [showPINModal, setShowPINModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
-  const [boardVerified, setBoardVerified] = useState(
-    !boardId || hasProtectedAccess("board", boardId),
-  );
 
+  /* ------ FETCH NOTES ----------------------------- */
   useEffect(() => {
-    if (!boardId) return undefined;
+    if (!boardId) return;
 
     if (currentUser) {
       return fetchNotes(boardId);
@@ -49,48 +42,28 @@ export default function NoteManager() {
 
     const saved = guestStorage.getNotes(boardId);
     setGuestNotes(saved);
-    return undefined;
   }, [boardId, currentUser, fetchNotes]);
 
+  /* ------ FIND BOARD ----------------------------- */
   const board = useMemo(
     () => boards.find((item) => item.id === boardId),
     [boards, boardId],
   );
 
-  useEffect(() => {
-    if (!board) return;
-
-    const verified = !board.isProtected || hasProtectedAccess("board", board.id);
-    setBoardVerified(verified);
-    setShowPINModal(board.isProtected && !verified);
-  }, [board]);
-
   const displayNotes = currentUser ? notes : guestNotes;
 
-  const handleBoardPINSubmit = async (pin) => {
-    if (!board || !verifyPIN(pin, board.pin)) {
-      throw new Error("Invalid PIN");
-    }
-
-    grantProtectedAccess("board", board.id);
-    setBoardVerified(true);
-    setShowPINModal(false);
-  };
-
+  /* ------ ACTIONS ----------------------------- */
   const handleAddNote = () => {
     if (!currentUser) {
       toast.error("Please login to create notes");
-      navigate(`/login?redirect=${encodeURIComponent(`/notes/add?boardId=${boardId}`)}`);
+      navigate(
+        `/login?redirect=${encodeURIComponent(`/notes/add?boardId=${boardId}`)}`
+      );
       return;
     }
 
     if (!boardId) {
       toast.error("Board ID is required");
-      return;
-    }
-
-    if (board?.isProtected && !boardVerified) {
-      setShowPINModal(true);
       return;
     }
 
@@ -101,7 +74,9 @@ export default function NoteManager() {
     if (!currentUser) {
       toast.error("Please login to edit notes");
       navigate(
-        `/login?redirect=${encodeURIComponent(`/notes/edit/${noteId}?boardId=${boardId}`)}`,
+        `/login?redirect=${encodeURIComponent(
+          `/notes/edit/${noteId}?boardId=${boardId}`
+        )}`
       );
       return;
     }
@@ -139,7 +114,9 @@ export default function NoteManager() {
   const handlePin = (noteId) => {
     if (!currentUser) {
       toast.error("Please login to pin notes");
-      navigate(`/login?redirect=${encodeURIComponent(`/notes?boardId=${boardId}`)}`);
+      navigate(
+        `/login?redirect=${encodeURIComponent(`/notes?boardId=${boardId}`)}`
+      );
       return;
     }
 
@@ -171,6 +148,7 @@ export default function NoteManager() {
     }
   };
 
+  /* ------ STATES ----------------------------- */
   if (!boardId) {
     return (
       <div
@@ -178,13 +156,7 @@ export default function NoteManager() {
         style={{ backgroundColor: colors.background }}
       >
         <div className="container">
-          <div
-            className="empty-state glass-card"
-            style={{
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-            }}
-          >
+          <div className="empty-state glass-card">
             <h3 style={{ color: colors.text }}>No Board Selected</h3>
             <p style={{ color: colors.textMuted }}>
               Choose a board first to view and manage notes.
@@ -222,7 +194,7 @@ export default function NoteManager() {
           <div className="empty-state glass-card">
             <h3 style={{ color: colors.text }}>Board not found</h3>
             <p style={{ color: colors.textMuted }}>
-              The selected board no longer exists or you no longer have access.
+              The selected board no longer exists.
             </p>
             <button className="btn btn-primary" onClick={() => navigate("/")}>
               Back to Dashboard
@@ -233,8 +205,7 @@ export default function NoteManager() {
     );
   }
 
-  const isLocked = board.isProtected && !boardVerified;
-
+  /* ------ UI ----------------------------- */
   return (
     <div
       className="note-manager glass-container"
@@ -242,34 +213,27 @@ export default function NoteManager() {
     >
       <div className="container">
         <PageBackButton fallback="/" />
+
         <div className="note-manager-header glass-card">
           <div>
-            <h2 style={{ color: colors.text, margin: 0 }}>{board.name}</h2>
+            <h2 style={{ color: colors.text, margin: 0 }}>
+              {board.name}
+            </h2>
             <p style={{ color: colors.textMuted, margin: 0 }}>
-              {board.description || "Manage your notes, priorities, files, and protected content here."}
+              {board.description ||
+                "Manage your notes, priorities, and files here."}
             </p>
           </div>
+
           <button
             className="btn btn-primary"
             onClick={handleAddNote}
-            style={{ whiteSpace: "nowrap" }}
-            disabled={isLocked}
           >
             New Note
           </button>
         </div>
 
-        {isLocked ? (
-          <div className="empty-state glass-card">
-            <h3 style={{ color: colors.text }}>This board is protected</h3>
-            <p style={{ color: colors.textMuted }}>
-              Enter the board PIN to view notes and continue with CRUD actions.
-            </p>
-            <button className="btn btn-primary" onClick={() => setShowPINModal(true)}>
-              Unlock Board
-            </button>
-          </div>
-        ) : notesLoading ? (
+        {notesLoading ? (
           <div className="loading-state">
             <div className="spinner"></div>
             <p>Loading notes...</p>
@@ -286,7 +250,7 @@ export default function NoteManager() {
                 updateNoteOrder(boardId, noteIds);
               } else {
                 const reordered = noteIds.map((id) =>
-                  guestNotes.find((item) => item.id === id),
+                  guestNotes.find((item) => item.id === id)
                 );
                 setGuestNotes(reordered);
                 guestStorage.saveNotes(boardId, reordered);
@@ -295,14 +259,6 @@ export default function NoteManager() {
           />
         )}
       </div>
-
-      <PINModal
-        isOpen={showPINModal}
-        onClose={() => setShowPINModal(false)}
-        onSubmit={handleBoardPINSubmit}
-        title="Board Protected"
-        description="Enter the board PIN to access and manage notes."
-      />
 
       <ConfirmationModal
         isOpen={showConfirm}

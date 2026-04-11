@@ -108,9 +108,7 @@ export default function AddBoard({ onSuccess }) {
   return (
     <div className="add-board-wrapper">
       <div className="add-board-container glass-card">
-        {location.pathname === "/boards/add" && (
-          <PageBackButton fallback="/" />
-        )}
+        {location.pathname === "/boards/add" && <PageBackButton fallback="/" />}
         <h3>✨ Create New Board</h3>
 
         <form onSubmit={handleSubmit} className="add-board-form">
