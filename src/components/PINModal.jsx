@@ -16,8 +16,14 @@ export default function PINModal({
   const pinInputsRef = useRef([]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    console.log("PINModal isOpen:", isOpen);
 
+    if (!isOpen) {
+      document.body.style.overflow = "";
+      return;
+    }
+
+    document.body.style.overflow = "hidden";
     setDigits(["", "", "", ""]);
     setError("");
     setLoading(false);
@@ -26,7 +32,10 @@ export default function PINModal({
       pinInputsRef.current[0]?.focus();
     }, 40);
 
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(timer);
+      document.body.style.overflow = "";
+    };
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -150,7 +159,11 @@ export default function PINModal({
             <button type="button" className="btn btn-outline" onClick={onClose}>
               Cancel
             </button>
-            <button type="submit" className="btn btn-primary" disabled={loading}>
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={loading}
+            >
               {loading ? "Verifying..." : "Verify PIN"}
             </button>
           </div>
