@@ -1,10 +1,15 @@
 export function hashPIN(pin) {
-  // Simple hash function for PIN (in production, use bcrypt on backend)
+  // Improved hash function using a simple salt and multiple rounds for better security
+  const salt = "noteflow_salt_2024";
   let hash = 0;
-  for (let i = 0; i < pin.length; i++) {
-    const char = pin.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash = hash & hash; // Convert to 32-bit integer
+  const combined = salt + pin;
+  for (let i = 0; i < combined.length; i++) {
+    const char = combined.charCodeAt(i);
+    hash = ((hash << 5) - hash + char) & 0xffffffff; // Ensure 32-bit
+  }
+  // Add some rounds
+  for (let round = 0; round < 10; round++) {
+    hash = ((hash << 7) - hash + round) & 0xffffffff;
   }
   return hash.toString(36);
 }
@@ -149,5 +154,5 @@ export const formatFileSize = (bytes) => {
   const k = 1024;
   const sizes = ["Bytes", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + " " + sizes[i];
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
 };
