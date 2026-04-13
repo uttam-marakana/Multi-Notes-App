@@ -16,7 +16,6 @@ import {
 } from "firebase/auth";
 
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
-import { revokeProtectedAccess } from "../utils/helpers";
 
 const AuthContext = createContext();
 
@@ -49,16 +48,20 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
+  const clearProtectedSession = useCallback(() => {
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("noteflow-protected-access");
+      console.log("Protected access session cleared");
+    }
+  }, []);
+
   const resetTimeout = useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
-      // Revoke all protected access after idle timeout
-      if (typeof window !== "undefined") {
-        sessionStorage.removeItem("noteflow-protected-access");
-      }
+      clearProtectedSession();
       console.log("Idle timeout: Protected access revoked");
     }, 300000); // 5 minutes
-  }, []);
+  }, [clearProtectedSession]);
 
   // ✅ AUTO AUTH STATE SYNC
   useEffect(() => {
@@ -114,6 +117,7 @@ export function AuthProvider({ children }) {
         password,
       );
 
+      clearProtectedSession();
       const user = userCredential.user;
 
       // 🔥 Store in Firestore
@@ -149,6 +153,7 @@ export function AuthProvider({ children }) {
         password,
       );
 
+      clearProtectedSession();
       return userCredential; // ✅ consistent return
     } catch (error) {
       console.error("Login Error:", error.message);
@@ -161,6 +166,7 @@ export function AuthProvider({ children }) {
     try {
       await signOut(auth);
       setCurrentUser(null);
+      clearProtectedSession();
     } catch (error) {
       console.error("Logout Error:", error.message);
       throw error;
