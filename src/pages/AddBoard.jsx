@@ -7,6 +7,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import { TiArrowSortedDown, TiArrowSortedUp } from "react-icons/ti";
 import PinInput from "../components/PinInput";
 import PageBackButton from "../components/PageBackButton";
+import ColorPicker from "../components/ColorPicker";
 
 export default function AddBoard({ onSuccess }) {
   const { currentUser } = useAuth();

@@ -18,6 +18,7 @@ import {
   hasProtectedAccess,
   verifyPIN,
 } from "../utils/helpers";
+import ColorPicker from "../components/ColorPicker";
 
 export default function AddNote() {
   const { currentUser } = useAuth();
