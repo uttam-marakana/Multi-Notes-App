@@ -128,19 +128,7 @@ export default function AddBoard({ onSuccess }) {
 
           <div className="form-group">
             <label>Board Color</label>
-            <div className="color-picker">
-              {boardColorPalette.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  className={`color-option ${
-                    selectedColor === c ? "selected" : ""
-                  }`}
-                  style={{ backgroundColor: c }}
-                  onClick={() => setSelectedColor(c)}
-                />
-              ))}
-            </div>
+            <ColorPicker value={selectedColor} onChange={setSelectedColor} />
           </div>
 
           <div className="advanced-toggle">

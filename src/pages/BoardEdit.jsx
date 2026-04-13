@@ -228,17 +228,7 @@ export default function BoardEdit() {
 
             <div className="form-group">
               <label style={{ color: colors.text }}>Board Color</label>
-              <div className="color-picker">
-                {boardColorPalette.map((color) => (
-                  <button
-                    key={color}
-                    type="button"
-                    className={`color-option ${selectedColor === color ? "selected" : ""}`}
-                    style={{ backgroundColor: color }}
-                    onClick={() => setSelectedColor(color)}
-                  />
-                ))}
-              </div>
+              <ColorPicker value={selectedColor} onChange={setSelectedColor} />
             </div>
 
             <div className="form-group">
