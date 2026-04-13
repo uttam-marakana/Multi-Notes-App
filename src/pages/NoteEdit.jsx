@@ -304,30 +304,17 @@ export default function NoteEdit() {
             </div>
 
             <div className="form-group">
-              <label style={{ color: colors.text }}>Priority</label>
-              <div className="priority-selector">
-                {["low", "medium", "high"].map((level) => (
-                  <button
-                    key={level}
-                    type="button"
-                    className={`priority-btn ${priority === level ? "active" : ""}`}
-                    onClick={() => setPriority(level)}
-                    style={{
-                      backgroundColor:
-                        priority === level
-                          ? priorityColors[level]
-                          : colors.background,
-                      borderColor:
-                        priority === level
-                          ? priorityColors[level]
-                          : colors.border,
-                      color: priority === level ? "white" : colors.text,
-                    }}
-                  >
-                    {level.toUpperCase()}
-                  </button>
-                ))}
-              </div>
+              <label style={{ color: colors.text }}>Priority Color</label>
+              <ColorPicker
+                value={priorityColors[priority]}
+                onChange={(color) => {
+                  const newPriority = Object.keys(priorityColors).find(
+                    (key) => priorityColors[key] === color,
+                  );
+                  if (newPriority) setPriority(newPriority);
+                }}
+                className="mb-4"
+              />
             </div>
 
             <div className="form-group">

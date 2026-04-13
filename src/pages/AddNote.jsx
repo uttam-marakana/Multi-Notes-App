@@ -221,26 +221,17 @@ export default function AddNote() {
             </div>
 
             <div className="form-group">
-              <label style={{ color: colors.text }}>Priority</label>
-              <div className="priority-selector">
-                {["low", "medium", "high"].map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    className={`priority-btn ${priority === p ? "active" : ""}`}
-                    onClick={() => setPriority(p)}
-                    style={{
-                      backgroundColor:
-                        priority === p ? priorityColors[p] : colors.background,
-                      borderColor:
-                        priority === p ? priorityColors[p] : colors.border,
-                      color: priority === p ? "white" : colors.text,
-                    }}
-                  >
-                    {p.toUpperCase()}
-                  </button>
-                ))}
-              </div>
+              <label style={{ color: colors.text }}>Priority & Color</label>
+              <ColorPicker
+                value={priorityColors[priority]}
+                onChange={(color) => {
+                  const newPriority = Object.keys(priorityColors).find(
+                    (key) => priorityColors[key] === color,
+                  );
+                  if (newPriority) setPriority(newPriority);
+                }}
+                className="mb-4"
+              />
             </div>
 
             {/* PROTECTION SYSTEM */}
