@@ -20,6 +20,7 @@ import {
   verifyPIN,
   verifyProtectedPIN,
 } from "../utils/helpers";
+import ColorPicker from "../components/ColorPicker";
 
 export default function NoteEdit() {
   const { id: noteId } = useParams();

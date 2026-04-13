@@ -11,6 +11,7 @@ import {
   hasProtectedAccess,
   verifyPIN,
 } from "../utils/helpers";
+import ColorPicker from "../components/ColorPicker";
 
 export default function BoardEdit() {
   const { id } = useParams();
