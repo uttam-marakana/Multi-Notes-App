@@ -4,6 +4,8 @@ import { useTheme } from "../contexts/ThemeContext";
 import { useNavigate } from "react-router-dom";
 import ThemeToggle from "../components/ThemeToggle";
 import BoardManager from "./BoardManager";
+import { CgLogIn, CgLogOut } from "react-icons/cg";
+
 import lightLogo from "../assets/images/primary_light_logo.png";
 import darkLogo from "../assets/images/primary_dark_logo.png";
 
@@ -31,7 +33,9 @@ const Dashboard = () => {
   };
 
   const userLabel =
-    currentUser?.name || currentUser?.displayName || currentUser?.email?.split("@")[0];
+    currentUser?.name ||
+    currentUser?.displayName ||
+    currentUser?.email?.split("@")[0];
 
   return (
     <div
@@ -57,15 +61,6 @@ const Dashboard = () => {
               <h1 className="dashboard-title" style={{ color: colors.text }}>
                 Noteflow
               </h1>
-              <p
-                style={{
-                  color: colors.textMuted,
-                  margin: 0,
-                  fontSize: "0.95rem",
-                }}
-              >
-                Smart notes in light and dark mode
-              </p>
             </div>
           </div>
 
@@ -86,14 +81,14 @@ const Dashboard = () => {
               className="btn btn-danger"
               title="Logout"
             >
-              🚪 Logout
+            <CgLogOut /> Logout
             </button>
           ) : (
             <button
               onClick={() => navigate("/login")}
               className="btn btn-primary"
             >
-              🔑 Login
+              <CgLogIn /> Login
             </button>
           )}
         </div>
@@ -109,30 +104,10 @@ const Dashboard = () => {
       )}
 
       {!currentUser && (
-        <div
-          style={{
-            backgroundColor: colors.info,
-            color: "white",
-            padding: "1rem",
-            margin: "1rem",
-            borderRadius: "0.5rem",
-            textAlign: "center",
-          }}
-        >
-          📌 <strong>Welcome!</strong> Please{" "}
-          <button
-            onClick={() => navigate("/login")}
-            style={{
-              background: "none",
-              border: "none",
-              color: "white",
-              textDecoration: "underline",
-              cursor: "pointer",
-              fontSize: "inherit",
-              fontWeight: "bold",
-            }}
-          >
-            login
+        <div className="btn-greet_banner">
+          <strong>Welcome!</strong> Please{" "}
+          <button className="btn-log" onClick={() => navigate("/login")}>
+            Login
           </button>{" "}
           to create and manage boards and notes.
         </div>
