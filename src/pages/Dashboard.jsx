@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { useNavigate } from "react-router-dom";
@@ -14,6 +14,14 @@ const Dashboard = () => {
   const { theme, colors } = useTheme();
   const [error, setError] = useState("");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Auto re-lock all on Dashboard visit
+    const accessKey = "noteflow-protected-access";
+    if (typeof window !== "undefined" && sessionStorage.getItem(accessKey)) {
+      sessionStorage.removeItem(accessKey);
+    }
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -81,7 +89,7 @@ const Dashboard = () => {
               className="btn btn-danger"
               title="Logout"
             >
-            <CgLogOut /> Logout
+              <CgLogOut /> Logout
             </button>
           ) : (
             <button
