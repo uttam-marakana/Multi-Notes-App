@@ -75,7 +75,7 @@ export default function ColorPicker({
         {isOpen && (
           <div className="absolute top-full left-0 z-50 w-[calc(100vw-2rem)] max-w-lg p-4 md:p-6 bg-surface border border-border rounded-2xl shadow-2xl backdrop-blur-xl mt-2 origin-top scale-100 animate-in fade-in zoom-in duration-200 mx-auto right-0 left-0 md:left-auto md:right-0">
             {/* Swatches Grid */}
-            <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2 mb-4 justify-items-center">
+            {/* <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2 mb-4 justify-items-center">
               {allColors.map((color) => (
                 <button
                   key={color}
@@ -95,7 +95,7 @@ export default function ColorPicker({
                   )}
                 </button>
               ))}
-            </div>
+            </div> */}
 
             {/* Custom Picker */}
             <div className="flex gap-3 items-center p-3 bg-gradient-to-r from-background/50 to-surface/50 rounded-xl border backdrop-blur">
@@ -113,7 +113,7 @@ export default function ColorPicker({
                 {customColor}
               </span>
               <button
-                className="btn btn-xs !px-4 whitespace-nowrap flex-shrink-0"
+                className="btn btn-xs px-4 whitespace-nowrap flex-shrink-0"
                 onClick={() => handleSelect(customColor)}
               >
                 Apply
