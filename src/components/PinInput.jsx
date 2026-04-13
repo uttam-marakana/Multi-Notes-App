@@ -1,12 +1,9 @@
 import React, { useRef, useEffect, useState } from "react";
 import { RiEye2Line, RiEyeCloseFill } from "react-icons/ri";
+import { useTheme } from "../contexts/ThemeContext";
 
-export default function PinInput({
-  value,
-  setValue,
-  label,
-  autoFocus = false,
-}) {
+export default function PinInput({ value = "", setValue, label, autoFocus }) {
+  const { theme } = useTheme();
   const inputsRef = useRef([]);
   const [visible, setVisible] = useState(false);
 
@@ -14,32 +11,17 @@ export default function PinInput({
     if (autoFocus) inputsRef.current[0]?.focus();
   }, [autoFocus]);
 
-  // ✅ HANDLE CHANGE + PASTE
   const handleChange = (index, val) => {
     const clean = val.replace(/\D/g, "");
+    let arr = value.split("");
 
-    // 🔥 Handle paste (e.g. "1234")
     if (clean.length > 1) {
-      const newPin = clean.slice(0, 4).split("");
-      setValue(newPin.join(""));
-
-      newPin.forEach((digit, i) => {
-        if (inputsRef.current[i]) {
-          inputsRef.current[i].value = digit;
-        }
-      });
-
-      inputsRef.current[Math.min(newPin.length - 1, 3)]?.focus();
-      return;
+      arr = clean.slice(0, 4).split("");
+    } else {
+      arr[index] = clean;
     }
 
-    // ✅ Normal typing
-    if (!/^\d?$/.test(clean)) return;
-
-    const newPin = value.split("");
-    newPin[index] = clean;
-    const updated = newPin.join("").slice(0, 4);
-
+    const updated = arr.join("").slice(0, 4);
     setValue(updated);
 
     if (clean && index < 3) {
@@ -47,31 +29,21 @@ export default function PinInput({
     }
   };
 
-  // ✅ BACKSPACE HANDLING
   const handleKeyDown = (index, e) => {
-    if (e.key === "Backspace") {
-      if (!value[index] && index > 0) {
-        inputsRef.current[index - 1]?.focus();
-      }
+    if (e.key === "Backspace" && !value[index] && index > 0) {
+      inputsRef.current[index - 1]?.focus();
     }
   };
 
-  // ✅ SYNC INPUTS WITH VALUE (IMPORTANT)
-  useEffect(() => {
-    const arr = value.split("");
-    inputsRef.current.forEach((input, i) => {
-      if (input) input.value = arr[i] || "";
-    });
-  }, [value]);
-
   return (
-    <div className="pin-block">
+    <div className={`pin-block ${theme}`}>
       <div className="pin-header">
         <label>{label}</label>
         <button
           type="button"
           className="pin-toggle"
           onClick={() => setVisible((v) => !v)}
+          aria-label={visible ? "Hide PIN" : "Show PIN"}
         >
           {visible ? <RiEyeCloseFill /> : <RiEye2Line />}
         </button>
@@ -88,7 +60,8 @@ export default function PinInput({
             value={value[i] || ""}
             onChange={(e) => handleChange(i, e.target.value)}
             onKeyDown={(e) => handleKeyDown(i, e)}
-            className="pin-box"
+            className="pin-box bg-background text-text border-border hover:scale-[1.05] hover:shadow-lg hover:border-primary/50 focus:ring-2 focus:ring-primary/30 focus:border-primary/75 transition-all duration-200 rounded-lg font-bold text-lg"
+            aria-label={`PIN digit ${i + 1}`}
           />
         ))}
       </div>
