@@ -449,6 +449,11 @@ button {
   transform: translateX(2px);
 }
 
+.btn-xs {
+  padding: var(--spacing-xs) var(--spacing-md);
+  font-size: 0.75rem; 
+}
+
 .btn-sm {
   padding: var(--spacing-xs) var(--spacing-md);
   font-size: 0.75rem;
