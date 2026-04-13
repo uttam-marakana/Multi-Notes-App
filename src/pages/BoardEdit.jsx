@@ -242,7 +242,7 @@ export default function BoardEdit() {
             </div>
 
             <div className="form-group">
-              <label style={{ color: colors.text }}>Security</label>
+              <label style={{ color: colors.text }}>Change Pin</label>
               <div className={`advanced-box ${isProtected ? "active" : ""}`}>
                 <div className="advanced-header">
                   <div className="flex items-center gap-2">

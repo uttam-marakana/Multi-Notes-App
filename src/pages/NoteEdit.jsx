@@ -25,31 +25,35 @@ export default function NoteEdit() {
   const { id: noteId } = useParams();
   const [searchParams] = useSearchParams();
   const boardId = searchParams.get("boardId");
+
   const navigate = useNavigate();
   const location = useLocation();
+
   const { currentUser } = useAuth();
   const { boards } = useBoard();
   const { notes, updateNote, fetchNotes, loading: notesLoading } = useNote();
   const { colors, priorityColors } = useTheme();
 
-  const titleRef = useRef();
-  const contentRef = useRef();
+  const [form, setForm] = useState({ title: "", content: "" });
 
   const [priority, setPriority] = useState("low");
   const [isProtected, setIsProtected] = useState(false);
   const [pin, setPin] = useState("");
   const [pinConfirm, setPinConfirm] = useState("");
   const [pinError, setPinError] = useState(false);
+
   const [existingFiles, setExistingFiles] = useState([]);
   const [newFiles, setNewFiles] = useState([]);
   const [removedFiles, setRemovedFiles] = useState([]);
   const [fileError, setFileError] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [showPINModal, setShowPINModal] = useState(false);
   const [requestedNotes, setRequestedNotes] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState(
     !noteId || hasProtectedAccess("note", noteId),
   );
+
   const note = notes.find((item) => item.id === noteId);
   const board = boards.find((item) => item.id === boardId);
 
@@ -62,13 +66,17 @@ export default function NoteEdit() {
   useEffect(() => {
     if (!note) return;
 
-    titleRef.current.value = note.title || "";
-    contentRef.current.value = note.content || "";
+    setForm({
+      title: note.title || "",
+      content: note.content || "",
+    });
+
     setPriority(note.priority || "low");
     setIsProtected(note.isProtected || false);
     setExistingFiles(note.files || []);
 
     const verified = !note.isProtected || hasProtectedAccess("note", note.id);
+
     setIsUnlocked(verified);
     setShowPINModal(note.isProtected && !verified);
   }, [note]);
@@ -106,24 +114,20 @@ export default function NoteEdit() {
 
   const handleFileChange = (event) => {
     const files = Array.from(event.target.files || []);
-    const allowedFiles = files.filter((file) =>
+    const allowedFiles = files.filter((f) =>
       [
         "image/jpeg",
         "image/png",
         "image/jpg",
         "image/gif",
         "application/pdf",
-      ].includes(file.type),
+      ].includes(f.type),
     );
 
-    if (allowedFiles.length !== files.length) {
-      setFileError("Only JPG, PNG, GIF, and PDF files are allowed.");
-    } else {
-      setFileError("");
-    }
-
+    setFileError(
+      allowedFiles.length !== files.length ? "Invalid file type." : "",
+    );
     setNewFiles((prev) => [...prev, ...allowedFiles].slice(0, 10));
-    event.target.value = null;
   };
 
   const removeExistingFile = (filePath) => {
@@ -135,16 +139,16 @@ export default function NoteEdit() {
     setNewFiles((prev) => prev.filter((file) => file.name !== fileName));
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
     if (!note || !boardId) {
       toast.error("Note or Board ID missing");
       return;
     }
 
-    const title = titleRef.current.value.trim();
-    const content = contentRef.current.value.trim();
+    const title = form.title.trim();
+    const content = form.content.trim();
 
     if (!title) {
       toast.error("Note title is required");
@@ -152,16 +156,9 @@ export default function NoteEdit() {
     }
 
     if (isProtected && pin) {
-      if (pin.length !== 4) {
+      if (pin.length !== 4 || pin !== pinConfirm) {
         setPinError(true);
-        toast.error("PIN must be 4 digits");
-        return;
-      }
-
-      if (pin !== pinConfirm) {
-        setPinError(true);
-        toast.error("PINs do not match");
-        return;
+        return toast.error("Invalid PIN");
       }
     }
 
@@ -188,9 +185,9 @@ export default function NoteEdit() {
   };
 
   const handlePINSubmit = async (enteredPIN) => {
-    const boardPinHash = board?.isProtected ? board.pin : null;
+    const boardPin = board?.isProtected ? board.pin : null;
 
-    if (!note || !verifyProtectedPIN(enteredPIN, note.pin, boardPinHash)) {
+    if (!note || !verifyProtectedPIN(enteredPIN, note.pin, boardPin)) {
       throw new Error("Invalid PIN");
     }
 
@@ -236,7 +233,7 @@ export default function NoteEdit() {
                 className="btn btn-primary"
                 onClick={() => setShowPINModal(true)}
               >
-                Unlock Note
+                Unlock
               </button>
               <button className="btn btn-outline" onClick={() => navigate(-1)}>
                 Back
@@ -276,7 +273,7 @@ export default function NoteEdit() {
             <div className="form-group">
               <label style={{ color: colors.text }}>Note Title</label>
               <input
-                ref={titleRef}
+                value={form.title}
                 type="text"
                 maxLength="100"
                 style={{
@@ -284,19 +281,25 @@ export default function NoteEdit() {
                   borderColor: colors.border,
                   color: colors.text,
                 }}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, title: e.target.value }))
+                }
               />
             </div>
 
             <div className="form-group">
               <label style={{ color: colors.text }}>Content</label>
               <textarea
-                ref={contentRef}
+                value={form.content}
                 rows="6"
                 style={{
                   backgroundColor: colors.background,
                   borderColor: colors.border,
                   color: colors.text,
                 }}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, content: e.target.value }))
+                }
               />
             </div>
 
