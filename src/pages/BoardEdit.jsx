@@ -248,17 +248,28 @@ export default function BoardEdit() {
                   <div className="flex items-center gap-2">
                     <span>Protect Board</span>
                   </div>
-                  <button
-                    type="button"
-                    className="btn btn-outline btn-sm"
-                    onClick={() => {
-                      setIsProtected((prev) => !prev);
-                      setPin("");
-                      setPinConfirm("");
-                    }}
-                  >
-                    {isProtected ? "Disable" : "Enable"}
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-sm"
+                      onClick={() => {
+                        setIsProtected((prev) => !prev);
+                        setPin("");
+                        setPinConfirm("");
+                      }}
+                    >
+                      {isProtected ? "Disable" : "Enable"}
+                    </button>
+                    {isUnlocked && (
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => navigate(`/boards/relock/${id}`)}
+                      >
+                        Re-lock
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {isProtected && (

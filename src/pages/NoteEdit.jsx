@@ -346,8 +346,24 @@ export default function NoteEdit() {
                   <div className="flex items-center gap-2">
                     <span>Protect Note</span>
                   </div>
-                  <div className="advanced-status">
-                    {isProtected ? "Enabled" : "Off"}
+                  <div className="flex gap-2">
+                    <div className="advanced-status">
+                      {isProtected ? "Enabled" : "Off"}
+                    </div>
+                    {isUnlocked && (
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(
+                            `/notes/relock/${noteId}?boardId=${boardId}`,
+                          );
+                        }}
+                      >
+                        Re-lock
+                      </button>
+                    )}
                   </div>
                 </div>
 
