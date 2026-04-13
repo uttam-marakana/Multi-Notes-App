@@ -7,170 +7,130 @@ export default function PINModal({
   onClose,
   onSubmit,
   title = "Enter PIN",
-  description = "This item is protected with a PIN.",
+  description = "4-digit PIN required",
 }) {
-  const { colors } = useTheme();
+  const { theme, colors } = useTheme();
   const [digits, setDigits] = useState(["", "", "", ""]);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
   const pinInputsRef = useRef([]);
 
   useEffect(() => {
-    console.log("PINModal isOpen:", isOpen);
+    if (!isOpen) return;
 
-    if (!isOpen) {
-      document.body.style.overflow = "";
-      return;
-    }
-
-    document.body.style.overflow = "hidden";
     setDigits(["", "", "", ""]);
     setError("");
-    setLoading(false);
 
-    const timer = window.setTimeout(() => {
-      pinInputsRef.current[0]?.focus();
-    }, 40);
-
-    return () => {
-      window.clearTimeout(timer);
-      document.body.style.overflow = "";
-    };
+    setTimeout(() => pinInputsRef.current[0]?.focus(), 50);
   }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const handlePinChange = (index, value) => {
-    const cleanValue = value.replace(/\D/g, "");
-    const nextDigits = [...digits];
+  const handleChange = (i, val) => {
+    const clean = val.replace(/\D/g, "");
+    const next = [...digits];
 
-    if (!cleanValue) {
-      nextDigits[index] = "";
-      setDigits(nextDigits);
-      setError("");
-      return;
+    if (clean.length > 1) {
+      clean.split("").forEach((d, idx) => {
+        if (i + idx < 4) next[i + idx] = d;
+      });
+    } else {
+      next[i] = clean;
     }
 
-    const incomingDigits = cleanValue.slice(0, 4).split("");
-    incomingDigits.forEach((digit, offset) => {
-      if (index + offset < 4) {
-        nextDigits[index + offset] = digit;
-      }
-    });
-
-    setDigits(nextDigits);
-    setError("");
-
-    const nextIndex = Math.min(index + incomingDigits.length, 3);
-    pinInputsRef.current[nextIndex]?.focus();
+    setDigits(next);
+    if (clean && i < 3) pinInputsRef.current[i + 1]?.focus();
   };
 
-  const handleBackspace = (index, event) => {
-    if (event.key !== "Backspace") return;
-
-    if (digits[index]) {
-      const nextDigits = [...digits];
-      nextDigits[index] = "";
-      setDigits(nextDigits);
-      return;
-    }
-
-    if (index > 0) {
-      pinInputsRef.current[index - 1]?.focus();
+  const handleKeyDown = (i, e) => {
+    if (e.key === "Backspace" && !digits[i] && i > 0) {
+      pinInputsRef.current[i - 1]?.focus();
     }
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     const pin = digits.join("");
+
     if (pin.length !== 4) {
-      setError("PIN must be 4 digits");
+      setError("Enter 4-digit PIN");
+      pinInputsRef.current[0]?.focus();
       return;
     }
 
-    setLoading(true);
-
+    setError("");
     try {
       await onSubmit(pin);
+    } catch {
+      setError("❌ Invalid PIN. Try again.");
+      pinInputsRef.current[0]?.focus();
       setDigits(["", "", "", ""]);
-      setError("");
-    } catch (submitError) {
-      setError(submitError.message || "Invalid PIN");
-    } finally {
-      setLoading(false);
     }
   };
 
-  const modalContent = (
+  return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div
-        className="modal pin-modal"
-        style={{ backgroundColor: colors.surface, borderColor: colors.border }}
-        onClick={(event) => event.stopPropagation()}
+        className={`modal pin-modal ${theme}`}
+        style={{
+          background: `var(--glass-bg)`,
+          border: `1px solid var(--glass-border)`,
+          color: `var(--color-text)`,
+          backdropFilter: "blur(20px)",
+        }}
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-header">
-          <div>
-            <h2 className="modal-title" style={{ margin: 0 }}>
-              {title}
-            </h2>
-            <p style={{ color: colors.textMuted, margin: "0.5rem 0 0 0" }}>
-              {description}
-            </p>
-          </div>
-          <button type="button" className="modal-close" onClick={onClose}>
-            ✕
+          <h3 className="modal-title">{title}</h3>
+          <button className="modal-close" onClick={onClose} aria-label="Close">
+            ×
           </button>
         </div>
-
-        <form onSubmit={handleSubmit} className="modal-body pin-modal-body">
-          <div className="pin-modal-inputs">
-            {[0, 1, 2, 3].map((index) => (
-              <input
-                key={index}
-                ref={(element) => {
-                  pinInputsRef.current[index] = element;
-                }}
-                value={digits[index]}
-                onChange={(event) => handlePinChange(index, event.target.value)}
-                onKeyDown={(event) => handleBackspace(index, event)}
-                maxLength={4}
-                type="password"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                disabled={loading}
-                className="pin-modal-digit"
-                style={{
-                  borderColor: error ? colors.danger : colors.border,
-                  backgroundColor: colors.background,
-                  color: colors.text,
-                }}
-              />
-            ))}
-          </div>
-
-          {error && (
-            <p className="form-error" style={{ marginBottom: 0 }}>
-              {error}
-            </p>
-          )}
-
-          <div className="modal-footer">
-            <button type="button" className="btn btn-outline" onClick={onClose}>
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={loading}
-            >
-              {loading ? "Verifying..." : "Verify PIN"}
-            </button>
-          </div>
-        </form>
+        <div className="modal-body pin-modal-body">
+          <p>{description}</p>
+          <form onSubmit={handleSubmit} className="pin-group">
+            <div className="pin-modal-inputs">
+              {[0, 1, 2, 3].map((i) => (
+                <input
+                  key={i}
+                  ref={(el) => (pinInputsRef.current[i] = el)}
+                  value={digits[i]}
+                  onChange={(e) => handleChange(i, e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(i, e)}
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={1}
+                  className="pin-modal-digit bg-background border-border hover:scale-[1.05] focus:(ring-primary ring-2 shadow-glow) text-2xl font-bold"
+                  aria-label={`Digit ${i + 1}`}
+                />
+              ))}
+            </div>
+            {error && (
+              <div className="alert alert-error mt-3" role="alert">
+                {error}
+              </div>
+            )}
+          </form>
+        </div>
+        <div className="modal-footer">
+          <button
+            type="button"
+            className="btn btn-outline"
+            onClick={onClose}
+            style={{ "--color-primary": colors.primary }}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={digits.join("").length !== 4}
+            onClick={handleSubmit}
+          >
+            Verify PIN
+          </button>
+        </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
-
-  return createPortal(modalContent, document.body);
 }
