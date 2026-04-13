@@ -68,12 +68,8 @@ export default function BoardEdit() {
       return;
     }
 
-    if (isProtected && pin) {
-      if (pin.length !== 4) {
-        toast.error("PIN must be 4 digits");
-        return;
-      }
-
+    // Optional PIN validation - only if changed
+    if (pin && pinConfirm && pin.length === 4) {
       if (pin !== pinConfirm) {
         toast.error("PINs do not match");
         return;
