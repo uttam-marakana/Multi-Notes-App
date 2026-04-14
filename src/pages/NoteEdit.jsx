@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Navigate,
   useLocation,
@@ -17,10 +17,10 @@ import PageBackButton from "../components/PageBackButton";
 import {
   grantProtectedAccess,
   hasProtectedAccess,
-  verifyPIN,
   verifyProtectedPIN,
 } from "../utils/helpers";
 import ColorPicker from "../components/ColorPicker";
+import { CiUnlock, CiLock } from "react-icons/ci";
 
 export default function NoteEdit() {
   const { id: noteId } = useParams();
@@ -319,7 +319,7 @@ export default function NoteEdit() {
             </div>
 
             <div className="form-group">
-              <label style={{ color: colors.text }}>Security</label>
+              <label style={{ color: colors.text }}>Change Pin</label>
 
               <div
                 className={`advanced-box ${isProtected ? "active" : ""}`}
@@ -336,22 +336,8 @@ export default function NoteEdit() {
                   </div>
                   <div className="flex gap-2">
                     <div className="advanced-status">
-                      {isProtected ? "Enabled" : "Off"}
+                      {isProtected ? <CiLock /> : <CiUnlock />}
                     </div>
-                    {isUnlocked && (
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(
-                            `/notes/relock/${noteId}?boardId=${boardId}`,
-                          );
-                        }}
-                      >
-                        Re-lock
-                      </button>
-                    )}
                   </div>
                 </div>
 
