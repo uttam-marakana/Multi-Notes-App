@@ -20,7 +20,7 @@ import {
   verifyProtectedPIN,
 } from "../utils/helpers";
 import ColorPicker from "../components/ColorPicker";
-import { CiUnlock, CiLock } from "react-icons/ci";
+import { HiLockClosed, HiLockOpen } from "react-icons/hi2";
 
 export default function NoteEdit() {
   const { id: noteId } = useParams();
@@ -336,7 +336,11 @@ export default function NoteEdit() {
                   </div>
                   <div className="flex gap-2">
                     <div className="advanced-status">
-                      {isProtected ? <CiLock /> : <CiUnlock />}
+                      {isProtected ? (
+                        <HiLockClosed color="#22c55e" size={20} />
+                      ) : (
+                        <HiLockOpen color="#9ca3af" size={20} />
+                      )}
                     </div>
                   </div>
                 </div>
