@@ -1,7 +1,7 @@
-import React from "react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useAuth } from "../../contexts/AuthContext";
 import NoteCard from "./NoteCard";
+import { FaNoteSticky } from "react-icons/fa6";
 
 const NoteList = ({ notes, boardId, onEdit, onDelete, onPin }) => {
   const { colors } = useTheme();
@@ -17,7 +17,9 @@ const NoteList = ({ notes, boardId, onEdit, onDelete, onPin }) => {
           borderColor: colors.border,
         }}
       >
-        <h3 style={{ color: colors.text }}>📝 No Notes</h3>
+        <h3 style={{ color: colors.text }}>
+          <FaNoteSticky color="rgb(108 107 246)" /> No Notes
+        </h3>
         <p style={{ color: colors.textMuted }}>
           Create your first note to get started!
         </p>
@@ -42,7 +44,7 @@ const NoteList = ({ notes, boardId, onEdit, onDelete, onPin }) => {
 
   return (
     <div className="note-list-container">
-      {/* ⭐ PINNED NOTES */}
+      {/* PINNED NOTES */}
       {pinnedNotes.length > 0 && (
         <div className="note-section">
           <h3 style={{ color: colors.text }}>⭐ Pinned Notes</h3>
