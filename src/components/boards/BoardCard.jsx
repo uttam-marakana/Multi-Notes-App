@@ -8,12 +8,14 @@ import {
   formatDate,
   hasProtectedAccess,
 } from "../../utils/helpers";
+import { GoStar, GoStarFill } from "react-icons/go";
+
 
 export default function BoardCard({
   board,
   onDelete,
   onPin,
-  onRequirePin, // 🔥 NEW
+  onRequirePin,
   isDragging = false,
 }) {
   const { colors } = useTheme();
@@ -121,9 +123,9 @@ export default function BoardCard({
             style={{ backgroundColor: board.color || colors.primary }}
           />
           <div className="board-title-group">
-            <h3 className="board-title" style={{ color: colors.text }}>
+            <h4 className="board-title" style={{ color: colors.text }}>
               {truncateText(board.name, 42)}
-            </h3>
+            </h4>
             <p className="board-subtitle" style={{ color: colors.textMuted }}>
               {board.isProtected && !isVerified
                 ? "PIN required to open"
@@ -182,7 +184,11 @@ export default function BoardCard({
           onClick={handleTogglePin}
           style={{ color: isPinned ? colors.primary : colors.textMuted }}
         >
-          {isPinned ? "★" : "☆"}
+          {isPinned ? (
+            <GoStarFill className="svg-size" />
+          ) : (
+            <GoStar className="svg-size" />
+          )}
         </button>
 
         <button
