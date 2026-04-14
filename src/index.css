@@ -1526,6 +1526,8 @@ textarea::placeholder {
 }
 
 .board-color-indicator {
+  display: flex;
+  align-self: flex-start;
   width: 12px;
   height: 12px;
   border-radius: 50%;
@@ -1548,6 +1550,7 @@ textarea::placeholder {
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -1578,7 +1581,7 @@ textarea::placeholder {
 
 .board-actions .btn {
   flex: 0 0 auto;
-  min-width: 60px;
+  /* min-width: 60px; */
   padding: var(--spacing-xs) var(--spacing-sm);
   font-size: 0.75rem;
 }
@@ -2447,6 +2450,7 @@ textarea::placeholder {
   margin: 0 0 var(--spacing-md) 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   word-break: break-word;
@@ -2493,6 +2497,11 @@ textarea::placeholder {
 button > svg {
   width: 32px;
   height: 32px;
+}
+
+.svg-size {
+  width: 16px;
+  height: 16px;
 }
 
 .note-files {
@@ -3036,6 +3045,7 @@ button > svg {
   .note-preview {
     font-size: 0.85rem;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
   }
 
   .note-grid {
