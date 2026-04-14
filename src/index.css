@@ -1991,6 +1991,11 @@ textarea::placeholder {
   -webkit-backdrop-filter: blur(14px);
 }
 
+.add-note-card > button {
+  width: 25% !important;
+  margin: 0 0 20px 0;
+}
+
 .page-back-button svg {
   width: 1.15rem;
   height: 1.15rem;
