@@ -10,7 +10,6 @@ import {
 } from "../../utils/helpers";
 import { GoStar, GoStarFill } from "react-icons/go";
 
-
 export default function BoardCard({
   board,
   onDelete,
