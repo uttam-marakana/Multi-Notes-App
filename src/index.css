@@ -6,11 +6,21 @@
 /* Tailwind Utilities */
 @layer utilities {
   .btn-success {
-    @apply bg-green-600 text-white hover:bg-green-700;
+    background-color: #16a34a;
+    color: white;
+  }
+
+  .btn-success:hover {
+    background-color: #15803d;
   }
 
   .btn-danger {
-    @apply bg-red-600 text-white hover:bg-red-700;
+    background-color: #dc2626;
+    color: white;
+  }
+
+  .btn-danger:hover {
+    background-color: #b91c1c;
   }
 }
 
@@ -1347,7 +1357,7 @@ textarea::placeholder {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: var(--spacing-2xl);
+  padding: var(--spacing-xl);
   margin: var(--spacing-md);
   border: 2px dashed var(--glass-border);
   border-radius: var(--radius-lg);
@@ -2894,7 +2904,7 @@ button > svg {
   .dashboard-actions {
     width: 100%;
     justify-content: space-between;
-    gap: var(--spacing-sm);
+    gap: var(--spacing-md);
   }
 
   .dashboard-actions .btn {
