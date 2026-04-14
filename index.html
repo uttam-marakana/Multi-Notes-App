@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -15,14 +15,14 @@
       }
 
       const testFavicon = new Image();
-      testFavicon.src = "/assets/images/favicon.png";
+      testFavicon.src = "/favicon.png";
 
       testFavicon.onload = function () {
         setFavicon(testFavicon.src);
       };
 
       testFavicon.onerror = function () {
-        setFavicon("/assets/images/favicon.png");
+        setFavicon("/favicon.png");
       };
     </script>
 
