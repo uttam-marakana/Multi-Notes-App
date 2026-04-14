@@ -58,7 +58,7 @@ export default function NoteManager() {
     if (!currentUser) {
       toast.error("Please login to create notes");
       navigate(
-        `/login?redirect=${encodeURIComponent(`/notes/add?boardId=${boardId}`)}`
+        `/login?redirect=${encodeURIComponent(`/notes/add?boardId=${boardId}`)}`,
       );
       return;
     }
@@ -76,8 +76,8 @@ export default function NoteManager() {
       toast.error("Please login to edit notes");
       navigate(
         `/login?redirect=${encodeURIComponent(
-          `/notes/edit/${noteId}?boardId=${boardId}`
-        )}`
+          `/notes/edit/${noteId}?boardId=${boardId}`,
+        )}`,
       );
       return;
     }
@@ -116,7 +116,7 @@ export default function NoteManager() {
     if (!currentUser) {
       toast.error("Please login to pin notes");
       navigate(
-        `/login?redirect=${encodeURIComponent(`/notes?boardId=${boardId}`)}`
+        `/login?redirect=${encodeURIComponent(`/notes?boardId=${boardId}`)}`,
       );
       return;
     }
