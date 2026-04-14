@@ -9,6 +9,7 @@ import { guestStorage } from "../utils/guestStorage";
 import ConfirmationModal from "../components/ConfirmationModal";
 import PageBackButton from "../components/PageBackButton";
 import NoteList from "../components/notes/NoteList";
+import { AiOutlineFileAdd } from "react-icons/ai";
 
 export default function NoteManager() {
   const [searchParams] = useSearchParams();
@@ -216,20 +217,15 @@ export default function NoteManager() {
 
         <div className="note-manager-header glass-card">
           <div>
-            <h2 style={{ color: colors.text, margin: 0 }}>
-              {board.name}
-            </h2>
+            <h2 style={{ color: colors.text, margin: 0 }}>{board.name}</h2>
             <p style={{ color: colors.textMuted, margin: 0 }}>
               {board.description ||
                 "Manage your notes, priorities, and files here."}
             </p>
           </div>
 
-          <button
-            className="btn btn-primary"
-            onClick={handleAddNote}
-          >
-            New Note
+          <button className="btn btn-primary" onClick={handleAddNote}>
+            <AiOutlineFileAdd className="svg-size" /> New Note
           </button>
         </div>
 
@@ -250,7 +246,7 @@ export default function NoteManager() {
                 updateNoteOrder(boardId, noteIds);
               } else {
                 const reordered = noteIds.map((id) =>
-                  guestNotes.find((item) => item.id === id)
+                  guestNotes.find((item) => item.id === id),
                 );
                 setGuestNotes(reordered);
                 guestStorage.saveNotes(boardId, reordered);
