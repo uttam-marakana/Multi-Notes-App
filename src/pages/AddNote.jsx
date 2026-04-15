@@ -36,6 +36,7 @@ export default function AddNote() {
   const titleRef = useRef();
   const contentRef = useRef();
   const [priority, setPriority] = useState("low");
+  const [noteColor, setNoteColor] = useState(priorityColors.low);
   const [isProtected, setIsProtected] = useState(false);
   const [pin, setPin] = useState("");
   const [pinConfirm, setPinConfirm] = useState("");
@@ -143,6 +144,7 @@ export default function AddNote() {
         title,
         content,
         priority,
+        color: noteColor,
         isProtected: board?.isProtected ? true : isProtected,
         pin: isProtected ? pin : null,
         pinHash:
@@ -224,8 +226,10 @@ export default function AddNote() {
             <div className="form-group">
               <label style={{ color: colors.text }}>Priority & Color</label>
               <ColorPicker
-                value={priorityColors[priority]}
+                value={noteColor}
                 onChange={(color) => {
+                  setNoteColor(color);
+                  // Optional: Map to priority for label
                   const newPriority = Object.keys(priorityColors).find(
                     (key) => priorityColors[key] === color,
                   );

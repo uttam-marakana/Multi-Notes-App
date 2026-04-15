@@ -38,6 +38,7 @@ export default function NoteEdit() {
   const [form, setForm] = useState({ title: "", content: "" });
 
   const [priority, setPriority] = useState("low");
+  const [noteColor, setNoteColor] = useState(priorityColors.low);
   const [isProtected, setIsProtected] = useState(false);
   const [pin, setPin] = useState("");
   const [pinConfirm, setPinConfirm] = useState("");
@@ -73,6 +74,7 @@ export default function NoteEdit() {
     });
 
     setPriority(note.priority || "low");
+    setNoteColor(note.color || priorityColors.low);
     setIsProtected(note.isProtected || false);
     setExistingFiles(note.files || []);
 
@@ -169,6 +171,7 @@ export default function NoteEdit() {
         title,
         content,
         priority,
+        color: noteColor,
         isProtected,
         pin: isProtected ? pin || undefined : null,
         newFiles,
@@ -307,8 +310,9 @@ export default function NoteEdit() {
             <div className="form-group">
               <label style={{ color: colors.text }}>Priority Color</label>
               <ColorPicker
-                value={priorityColors[priority]}
+                value={noteColor}
                 onChange={(color) => {
+                  setNoteColor(color);
                   const newPriority = Object.keys(priorityColors).find(
                     (key) => priorityColors[key] === color,
                   );
