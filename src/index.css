@@ -1559,7 +1559,7 @@ textarea::placeholder {
   color: var(--color-text-muted);
   line-height: 1.4;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  line-clamp: 2;
   line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
@@ -1992,7 +1992,7 @@ textarea::placeholder {
 }
 
 .add-note-card > button {
-  width: 25% !important;
+  width: 25%;
   margin: 0 0 20px 0;
 }
 
@@ -2464,7 +2464,7 @@ textarea::placeholder {
   line-height: 1.5;
   margin: 0 0 var(--spacing-md) 0;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  line-clamp: 2;
   line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
@@ -3059,7 +3059,7 @@ button > svg {
 
   .note-preview {
     font-size: 0.85rem;
-    -webkit-line-clamp: 2;
+    line-clamp: 2;
     line-clamp: 2;
   }
 
@@ -3131,6 +3131,10 @@ button > svg {
     flex-direction: column;
     align-items: flex-start;
     padding: 15px 10px;
+  }
+
+  .page-back-button {
+    width: 25%;
   }
 }
 
@@ -3315,7 +3319,7 @@ button > svg {
 
   .note-preview {
     font-size: 0.8rem;
-    -webkit-line-clamp: 2;
+    line-clamp: 2;
     margin-bottom: var(--spacing-sm);
   }
 
@@ -3324,7 +3328,7 @@ button > svg {
   }
 
   .note-actions .btn {
-    padding: var(--spacing-xs) 4px;
+    padding: var(--spacing-xs);
     font-size: 0.8rem;
   }
 
@@ -3371,5 +3375,9 @@ button > svg {
 
   .dashboard-header h1 {
     font-size: 1.2rem;
+  }
+
+  .page-back-button {
+    width: 40% !important;
   }
 }
