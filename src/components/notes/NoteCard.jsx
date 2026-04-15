@@ -39,6 +39,7 @@ export default function NoteCard({
     currentUserId && note.pinnedBy?.includes(currentUserId),
   );
   const priorityColor = getPriorityColor(note.priority, priorityColors);
+  const noteColor = note.color;
 
   useEffect(() => {
     setIsVerified(!note.isProtected || hasProtectedAccess("note", note.id));
@@ -90,7 +91,7 @@ export default function NoteCard({
         style={{
           backgroundColor: colors.surface,
           borderColor: colors.border,
-          borderLeftColor: priorityColor,
+          borderLeftColor: note.color || priorityColor,
         }}
       >
         {note.isProtected && !isVerified && (
