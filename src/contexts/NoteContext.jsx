@@ -9,15 +9,18 @@ import {
   doc,
   updateDoc,
   query,
+  where,
   orderBy,
   getDoc,
 } from "firebase/firestore";
+
 import {
   ref as storageRef,
   uploadBytesResumable,
   getDownloadURL,
   deleteObject,
 } from "firebase/storage";
+
 import { useAuth } from "./AuthContext";
 import { hashPIN, revokeProtectedAccess } from "../utils/helpers";
 
@@ -82,15 +85,13 @@ export function NoteProvider({ children }) {
       }
 
       setLoading(true);
-      const notesRef = collection(
-        db,
-        "users",
-        currentUser.uid,
-        "boards",
-        boardId,
-        "notes",
+      const notesRef = collection(db, "notes");
+      const q = query(
+        notesRef,
+        where("boardId", "==", boardId),
+        where("ownerId", "==", currentUser.uid),
+        orderBy("order", "asc"),
       );
-      const q = query(notesRef, orderBy("order", "asc"));
 
       const unsubscribe = onSnapshot(
         q,
@@ -103,8 +104,13 @@ export function NoteProvider({ children }) {
           setLoading(false);
         },
         (error) => {
-          console.error("Error fetching notes:", error);
           setLoading(false);
+
+          if (error.code === "failed-precondition") {
+            console.warn("Missing Firestore index. Create it in console.");
+          } else {
+            console.error("Error fetching notes");
+          }
         },
       );
 
@@ -121,9 +127,11 @@ export function NoteProvider({ children }) {
       : [];
 
     const newNote = {
+      boardId,
+      ownerId: currentUser.uid,
       title: noteData.title || "Untitled Note",
       content: noteData.content || "",
-      priority: noteData.priority || "low", // low, medium, high
+      priority: noteData.priority || "low",
       pinnedBy: [],
       isProtected: noteData.isProtected || false,
       pin: noteData.pinHash
@@ -133,20 +141,15 @@ export function NoteProvider({ children }) {
           : null,
       contentType: noteData.contentType || ["text"],
       files: uploadedFiles,
-      ownerId: currentUser.uid,
-      order: notes.length,
+
+      // ✅ FIXED ORDER (only change)
+      order: Date.now(),
+
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
-    const notesRef = collection(
-      db,
-      "users",
-      currentUser.uid,
-      "boards",
-      boardId,
-      "notes",
-    );
+    const notesRef = collection(db, "notes");
     const docRef = await addDoc(notesRef, newNote);
     return docRef.id;
   };
@@ -155,21 +158,19 @@ export function NoteProvider({ children }) {
     if (!boardId || !noteId || !currentUser)
       throw new Error("Invalid parameters");
 
-    const noteRef = doc(
-      db,
-      "users",
-      currentUser.uid,
-      "boards",
-      boardId,
-      "notes",
-      noteId,
-    );
+    const noteRef = doc(db, "notes", noteId);
 
     const noteSnapshot = await getDoc(noteRef);
-    if (noteSnapshot.exists()) {
-      await deleteStoredFiles(noteSnapshot.data().files || []);
+    const noteData = noteSnapshot.data();
+    if (
+      !noteSnapshot.exists() ||
+      noteData.ownerId !== currentUser.uid ||
+      noteData.boardId !== boardId
+    ) {
+      throw new Error("Note not found or access denied");
     }
 
+    await deleteStoredFiles(noteData.files || []);
     await deleteDoc(noteRef);
     revokeProtectedAccess("note", noteId);
   };
@@ -179,17 +180,10 @@ export function NoteProvider({ children }) {
       throw new Error("Invalid parameters");
 
     const note = notes.find((n) => n.id === noteId);
-    if (!note) throw new Error("Note not found");
+    if (!note || note.boardId !== boardId || note.ownerId !== currentUser.uid)
+      throw new Error("Note not found or access denied");
 
-    const noteRef = doc(
-      db,
-      "users",
-      currentUser.uid,
-      "boards",
-      boardId,
-      "notes",
-      noteId,
-    );
+    const noteRef = doc(db, "notes", noteId);
 
     let mergedFiles = note.files || [];
 
@@ -249,17 +243,13 @@ export function NoteProvider({ children }) {
   const updateNoteOrder = async (boardId, newOrder) => {
     if (!boardId || !currentUser) return;
 
-    const updatePromises = newOrder.map((noteId, index) => {
-      const noteRef = doc(
-        db,
-        "users",
-        currentUser.uid,
-        "boards",
-        boardId,
-        "notes",
-        noteId,
-      );
-      return updateDoc(noteRef, { order: index });
+    const updatePromises = newOrder.map(async (noteId, index) => {
+      const noteRef = doc(db, "notes", noteId);
+
+      return updateDoc(noteRef, {
+        // ✅ collision-safe incremental order
+        order: Date.now() + index,
+      });
     });
 
     await Promise.all(updatePromises);
