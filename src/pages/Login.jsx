@@ -135,7 +135,7 @@ export default function Login() {
           </form>
 
           <div className="auth-footer">
-            <p style={{ color: colors.textMuted, marginBottom: "1rem" }}>
+            <p style={{ color: colors.textMuted, marginBottom: "0.75rem" }}>
               Don&apos;t have an account?{" "}
               <Link
                 to="/signup"
@@ -148,7 +148,21 @@ export default function Login() {
                 Create one here
               </Link>
             </p>
+
+            <p style={{ color: colors.textMuted, marginBottom: 0 }}>
+              <Link
+                to="/forgot-password"
+                style={{
+                  color: colors.primary,
+                  fontWeight: "600",
+                  textDecoration: "none",
+                }}
+              >
+                Forgot password? Change password
+              </Link>
+            </p>
           </div>
+
         </div>
 
         <div className="auth-features" style={{ color: colors.textMuted }}>
