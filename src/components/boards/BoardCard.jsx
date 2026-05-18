@@ -9,6 +9,8 @@ import {
   hasProtectedAccess,
 } from "../../utils/helpers";
 import { GoStar, GoStarFill } from "react-icons/go";
+import ThreeDotsMenu from "../ThreeDotsMenu";
+
 
 export default function BoardCard({
   board,
@@ -174,29 +176,28 @@ export default function BoardCard({
           View Notes
         </button>
 
-        <button className="btn btn-outline btn-sm" onClick={handleEdit}>
-          Edit
-        </button>
-
-        <button
-          className="btn btn-ghost btn-sm"
-          onClick={handleTogglePin}
-          style={{ color: isPinned ? colors.primary : colors.textMuted }}
-        >
-          {isPinned ? (
-            <GoStarFill className="svg-size" />
-          ) : (
-            <GoStar className="svg-size" />
-          )}
-        </button>
-
-        <button
-          className="btn btn-ghost btn-sm"
-          onClick={handleDelete}
-          style={{ color: colors.danger }}
-        >
-          Delete
-        </button>
+        <ThreeDotsMenu
+          items={[
+            {
+              label: "Edit",
+              onClick: handleEdit,
+              disabled: !isOwner,
+            },
+            {
+              label: isPinned ? "Unfavourite" : "Favourite",
+              onClick: handleTogglePin,
+              icon: isPinned ? <GoStarFill className="svg-size" /> : <GoStar className="svg-size" />,
+              disabled: !currentUser,
+            },
+            {
+              label: "Delete",
+              onClick: handleDelete,
+              danger: true,
+              disabled: !isOwner,
+            },
+          ]}
+          iconColor={colors.textMuted}
+        />
       </div>
     </article>
   );

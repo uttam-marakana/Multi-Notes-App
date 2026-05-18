@@ -3,6 +3,7 @@ import { useTheme } from "../../contexts/ThemeContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { useBoard } from "../../contexts/BoardContext";
 import PINModal from "../PINModal";
+import ThreeDotsMenu from "../ThreeDotsMenu";
 import {
   getPriorityColor,
   truncateText,
@@ -23,6 +24,7 @@ export default function NoteCard({
   isDragging = false,
 }) {
   const { colors, priorityColors } = useTheme();
+  void noteColor;
   const { currentUser } = useAuth();
   const { boards } = useBoard();
   const [showPINModal, setShowPINModal] = useState(false);
@@ -197,36 +199,28 @@ export default function NoteCard({
         </div>
 
         <div className="note-actions">
-          <button
-            className="btn btn-outline btn-sm"
-            onClick={handleEdit}
-            title={isOwner ? "Edit note" : "Read only"}
-            disabled={!isOwner}
-          >
-            Edit
-          </button>
-
-          {isOwner && (
-            <>
-              <button
-                className="btn btn-ghost btn-sm"
-                onClick={handlePin}
-                title={isPinned ? "Unpin note" : "Pin note"}
-                style={{ color: isPinned ? colors.primary : colors.textMuted }}
-              >
-                {isPinned ? "★" : "☆"}
-              </button>
-
-              <button
-                className="btn btn-ghost btn-sm"
-                onClick={handleDelete}
-                title="Delete note"
-                style={{ color: colors.danger }}
-              >
-                Delete
-              </button>
-            </>
-          )}
+        <ThreeDotsMenu
+          items={[
+            {
+              label: "Edit",
+              onClick: handleEdit,
+              disabled: !isOwner,
+            },
+            {
+              label: isPinned ? "Unfavourite" : "Favourite",
+              onClick: handlePin,
+              icon: <span style={{ fontSize: "1.1rem" }}>{isPinned ? "★" : "☆"}</span>,
+              disabled: !isOwner,
+            },
+            {
+              label: "Delete",
+              onClick: handleDelete,
+              danger: true,
+              disabled: !isOwner,
+            },
+          ]}
+          iconColor={colors.textMuted}
+        />
         </div>
       </article>
 
