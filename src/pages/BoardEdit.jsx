@@ -19,6 +19,8 @@ export default function BoardEdit() {
   const { boards, loading, updateBoard } = useBoard();
   const { colors, boardColorPalette } = useTheme();
 
+  void boardColorPalette;
+
   const board = useMemo(
     () => boards.find((item) => item.id === id),
     [boards, id],

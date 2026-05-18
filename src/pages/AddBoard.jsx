@@ -30,6 +30,7 @@ export default function AddBoard({ onSuccess }) {
 
   const { addBoard } = useBoard();
   const { boardColorPalette } = useTheme();
+  void boardColorPalette;
 
   useEffect(() => {
     nameRef.current?.focus();

@@ -82,7 +82,7 @@ export default function NoteEdit() {
 
     setIsUnlocked(verified);
     setShowPINModal(note.isProtected && !verified);
-  }, [note]);
+  }, [note, priorityColors.low]);
 
   useEffect(() => {
     if (pinError && pin === pinConfirm) {
