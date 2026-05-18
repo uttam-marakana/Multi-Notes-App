@@ -2397,10 +2397,11 @@ textarea::placeholder {
   display: flex;
   flex-direction: column;
   height: 100%;
-  min-height: 200px;
+  min-height: 300px;
   animation: floatIn 0.6s ease;
   perspective: 1000px;
 }
+
 
 .note-card::after {
   content: "";
@@ -2460,7 +2461,6 @@ textarea::placeholder {
 }
 
 .note-preview {
-  font-size: 0.9rem;
   line-height: 1.5;
   margin: 0 0 var(--spacing-md) 0;
   display: -webkit-box;
@@ -2470,6 +2470,7 @@ textarea::placeholder {
   overflow: hidden;
   word-break: break-word;
 }
+
 
 .note-meta {
   flex: 1;
