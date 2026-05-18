@@ -27,10 +27,14 @@ export default function ColorPicker({
   className = "",
 }) {
   const { boardColorPalette } = useTheme();
+  void boardColorPalette;
   const [isOpen, setIsOpen] = useState(false);
   const [customColor, setCustomColor] = useState(value || "#3B82F6");
 
+  // Includes theme palette + generated colors; grid is currently commented out.
+  // Keep this for future grid UI.
   const allColors = [...boardColorPalette, ...generateColors(16)];
+  void allColors;
 
   useEffect(() => {
     setCustomColor(value || "#3B82F6");
