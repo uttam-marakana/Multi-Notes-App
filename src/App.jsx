@@ -14,7 +14,9 @@ import LoadingSpinner from "./components/LoadingSpinner";
 
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
+import ForgotPassword from "./pages/ForgotPassword";
 import Dashboard from "./pages/Dashboard";
+
 import BoardManager from "./pages/BoardManager";
 import AddBoard from "./pages/AddBoard";
 import BoardEdit from "./pages/BoardEdit";
@@ -39,6 +41,11 @@ function App() {
                       {/* Public Routes */}
                       <Route path="/login" element={<Login />} />
                       <Route path="/signup" element={<SignUp />} />
+                      <Route
+                        path="/forgot-password"
+                        element={<ForgotPassword />}
+                      />
+
 
                       {/* Dashboard - Public Access (allows guest browsing) */}
                       <Route path="/" element={<Dashboard />} />
