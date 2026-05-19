@@ -205,37 +205,48 @@ export default function NoteCard({
           )}
         </div>
 
-        <div className="note-actions">
+        <div
+          className="note-actions"
+          style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+        >
+          <button
+            className="btn btn-ghost btn-sm"
+            onClick={handleEdit}
+            disabled={!isOwner}
+            title="Edit"
+          >
+            <RiEdit2Line className="svg-size" />
+          </button>
+
+          <button
+            className="btn btn-ghost btn-sm"
+            onClick={handleDelete}
+            disabled={!isOwner}
+            title="Delete"
+            style={{ color: colors.danger }}
+          >
+            <RiDeleteBin6Line className="svg-size" />
+          </button>
+
           <ThreeDotsMenu
             items={[
               {
-                label: "Edit",
-                onClick: handleEdit,
-                icon: <RiEdit2Line className="svg-size" />,
-                disabled: !isOwner,
-              },
-
-              {
                 label: isPinned ? "Unfavourite" : "Favourite",
                 onClick: handlePin,
-                icon: (
-                  <span style={{ fontSize: "1.1rem" }}>
-                    {isPinned ? "★" : "☆"}
-                  </span>
-                ),
+                icon: <span style={{ fontSize: "1.1rem" }}>{isPinned ? "★" : "☆"}</span>,
                 disabled: !isOwner,
               },
               {
-                label: "Delete",
-                onClick: handleDelete,
-                icon: <RiDeleteBin6Line className="svg-size" />,
-                danger: true,
+                label: "Clone",
+                onClick: handleClone,
+                icon: <span style={{ fontSize: "1.05rem" }}>⧉</span>,
                 disabled: !isOwner,
               },
             ]}
             iconColor={colors.textMuted}
           />
         </div>
+
       </article>
 
       <PINModal
