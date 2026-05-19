@@ -23,6 +23,7 @@ export default function NoteManager() {
     deleteNote,
     toggleNotePin,
     updateNoteOrder,
+    cloneNote,
     loading: notesLoading,
   } = useNote();
 
@@ -139,6 +140,15 @@ export default function NoteManager() {
     }
   };
 
+  const handleCloneNote = async (noteId) => {
+    try {
+      await cloneNote(boardId, noteId);
+      toast.success("Note cloned");
+    } catch (error) {
+      toast.error(error.message || "Failed to clone note");
+    }
+  };
+
   const handleConfirm = () => {
     setShowConfirm(false);
 
@@ -241,6 +251,7 @@ export default function NoteManager() {
             onEdit={handleEditNote}
             onDelete={handleDeleteNote}
             onPin={handlePin}
+            onClone={handleCloneNote}
             onReorder={(noteIds) => {
               if (currentUser) {
                 updateNoteOrder(boardId, noteIds);

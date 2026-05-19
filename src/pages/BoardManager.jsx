@@ -12,7 +12,7 @@ import { MdOutlineAddCircleOutline } from "react-icons/md";
 
 export default function BoardManager() {
   const { currentUser } = useAuth();
-  const { boards, deleteBoard, toggleBoardPin, loading } = useBoard();
+  const { boards, deleteBoard, toggleBoardPin, loading, duplicateBoard } = useBoard();
 
   const { colors } = useTheme();
   const navigate = useNavigate();
@@ -145,6 +145,7 @@ export default function BoardManager() {
           boards={displayBoards}
           onDelete={handleDelete}
           onPin={handlePin}
+          onDuplicate={duplicateBoard}
         />
       )}
 
