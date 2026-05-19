@@ -14,6 +14,7 @@ import {
   grantProtectedAccess,
   hasProtectedAccess,
 } from "../../utils/helpers";
+import { RiDeleteBin6Line, RiEdit2Line } from "react-icons/ri";
 
 export default function NoteCard({
   note,
@@ -21,6 +22,7 @@ export default function NoteCard({
   onEdit,
   onDelete,
   onPin,
+  onClone,
   isDragging = false,
 }) {
   const { colors, priorityColors } = useTheme();
@@ -70,6 +72,11 @@ export default function NoteCard({
   const handlePin = () => {
     if (!isOwner) return;
     runProtectedAction(onPin);
+  };
+
+  const handleClone = () => {
+    if (!isOwner) return;
+    runProtectedAction(onClone);
   };
 
   const handlePINSubmit = async (pin) => {
@@ -204,8 +211,10 @@ export default function NoteCard({
             {
               label: "Edit",
               onClick: handleEdit,
+              icon: <RiEdit2Line className="svg-size" />,
               disabled: !isOwner,
             },
+
             {
               label: isPinned ? "Unfavourite" : "Favourite",
               onClick: handlePin,
@@ -213,8 +222,11 @@ export default function NoteCard({
               disabled: !isOwner,
             },
             {
+              label: "Clone",
+            {
               label: "Delete",
               onClick: handleDelete,
+              icon: <RiDeleteBin6Line className="svg-size" />,
               danger: true,
               disabled: !isOwner,
             },
