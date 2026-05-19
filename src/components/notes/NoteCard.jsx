@@ -206,33 +206,35 @@ export default function NoteCard({
         </div>
 
         <div className="note-actions">
-        <ThreeDotsMenu
-          items={[
-            {
-              label: "Edit",
-              onClick: handleEdit,
-              icon: <RiEdit2Line className="svg-size" />,
-              disabled: !isOwner,
-            },
+          <ThreeDotsMenu
+            items={[
+              {
+                label: "Edit",
+                onClick: handleEdit,
+                icon: <RiEdit2Line className="svg-size" />,
+                disabled: !isOwner,
+              },
 
-            {
-              label: isPinned ? "Unfavourite" : "Favourite",
-              onClick: handlePin,
-              icon: <span style={{ fontSize: "1.1rem" }}>{isPinned ? "★" : "☆"}</span>,
-              disabled: !isOwner,
-            },
-            {
-              label: "Clone",
-            {
-              label: "Delete",
-              onClick: handleDelete,
-              icon: <RiDeleteBin6Line className="svg-size" />,
-              danger: true,
-              disabled: !isOwner,
-            },
-          ]}
-          iconColor={colors.textMuted}
-        />
+              {
+                label: isPinned ? "Unfavourite" : "Favourite",
+                onClick: handlePin,
+                icon: (
+                  <span style={{ fontSize: "1.1rem" }}>
+                    {isPinned ? "★" : "☆"}
+                  </span>
+                ),
+                disabled: !isOwner,
+              },
+              {
+                label: "Delete",
+                onClick: handleDelete,
+                icon: <RiDeleteBin6Line className="svg-size" />,
+                danger: true,
+                disabled: !isOwner,
+              },
+            ]}
+            iconColor={colors.textMuted}
+          />
         </div>
       </article>
 
