@@ -110,8 +110,15 @@ export function BoardProvider({ children }) {
   const deleteBoard = async (id) => {
     if (!currentUser) throw new Error("User not authenticated");
 
-    const notesRef = collection(db, "users", currentUser.uid, "boards", id, "notes");
-    const notesSnapshot = await getDocs(notesRef);
+    // Delete notes from the same collection your app queries in NoteContext
+    // (/notes where boardId == id AND ownerId == currentUser.uid)
+    const notesQuery = query(
+      collection(db, "notes"),
+      where("boardId", "==", id),
+      where("ownerId", "==", currentUser.uid),
+    );
+
+    const notesSnapshot = await getDocs(notesQuery);
 
     await Promise.allSettled(
       notesSnapshot.docs.flatMap((noteDoc) => {
