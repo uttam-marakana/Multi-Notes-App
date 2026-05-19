@@ -261,6 +261,47 @@ export function NoteProvider({ children }) {
   const getNotesByPriority = (priority) =>
     notes.filter((n) => n.priority === priority);
 
+  const cloneNote = async (boardId, noteId) => {
+    if (!boardId || !noteId || !currentUser) throw new Error("Invalid parameters");
+
+    const noteRef = doc(db, "notes", noteId);
+    const noteSnapshot = await getDoc(noteRef);
+
+    if (!noteSnapshot.exists()) throw new Error("Note not found");
+
+    const noteData = noteSnapshot.data();
+
+    if (noteData.ownerId !== currentUser.uid || noteData.boardId !== boardId) {
+      throw new Error("Note not found or access denied");
+    }
+
+    // clone note doc
+    const newNote = {
+      boardId,
+      ownerId: currentUser.uid,
+      title: `${noteData.title || "Untitled Note"}`,
+      content: noteData.content || "",
+      priority: noteData.priority || "low",
+      pinnedBy: [],
+      isProtected: noteData.isProtected || false,
+      pin: noteData.pin ? noteData.pin : null,
+      contentType: noteData.contentType || ["text"],
+
+      // keep current files metadata; if your app expects storage objects to exist,
+      // you can duplicate storage files. Here we do not duplicate storage objects,
+      // we just reference the same URLs/paths (same as a lightweight clone).
+      files: noteData.files || [],
+
+      order: Date.now(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const notesRef = collection(db, "notes");
+    const docRef = await addDoc(notesRef, newNote);
+    return docRef.id;
+  };
+
   const getNoteCount = () => notes.length;
 
   return (
@@ -277,6 +318,7 @@ export function NoteProvider({ children }) {
         getPinnedNotes,
         getNotesByPriority,
         getNoteCount,
+        cloneNote,
       }}
     >
       {children}
