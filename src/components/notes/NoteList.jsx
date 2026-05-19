@@ -3,7 +3,14 @@ import { useAuth } from "../../contexts/AuthContext";
 import NoteCard from "./NoteCard";
 import { FaNoteSticky } from "react-icons/fa6";
 
-const NoteList = ({ notes, boardId, onEdit, onDelete, onPin }) => {
+const NoteList = ({
+  notes,
+  boardId,
+  onEdit,
+  onDelete,
+  onPin,
+  onClone,
+}) => {
   const { colors } = useTheme();
   const { currentUser } = useAuth();
   const currentUserId = currentUser?.uid;
@@ -58,6 +65,7 @@ const NoteList = ({ notes, boardId, onEdit, onDelete, onPin }) => {
                 onEdit={() => onEdit?.(note.id)}
                 onDelete={() => onDelete?.(note.id)}
                 onPin={() => onPin?.(note.id)}
+                onClone={() => onClone?.(note.id)}
               />
             ))}
           </div>
@@ -78,8 +86,9 @@ const NoteList = ({ notes, boardId, onEdit, onDelete, onPin }) => {
               boardId={boardId}
               onEdit={() => onEdit?.(note.id)}
               onDelete={() => onDelete?.(note.id)}
-              onPin={() => onPin?.(note.id)}
-            />
+                onPin={() => onPin?.(note.id)}
+                onClone={() => onClone?.(note.id)}
+              />
           ))}
         </div>
       </div>
