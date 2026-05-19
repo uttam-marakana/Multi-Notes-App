@@ -59,7 +59,19 @@ export default function BoardManager() {
       await deleteBoard(boardId);
       toast.success("Board deleted successfully!");
     } catch (error) {
-      toast.error(error.message || "Failed to delete board.");
+      console.error("deleteBoard failed:", {
+        boardId,
+        name: error?.name,
+        code: error?.code,
+        message: error?.message,
+        // Firestore errors are sometimes nested; log everything so we can see it
+        full: error,
+      });
+      toast.error(
+        error?.message ||
+          error?.code ||
+          "Failed to delete board.",
+      );
     }
   };
 
