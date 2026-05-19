@@ -1415,8 +1415,6 @@ textarea::placeholder {
   border-radius: var(--radius-lg);
   padding: var(--spacing-lg);
   background: var(--glass-bg);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--glass-border);
   box-shadow:
     0 8px 32px 0 rgba(31, 38, 135, 0.1),
@@ -1450,8 +1448,6 @@ textarea::placeholder {
 
 .board-card:hover {
   transform: translateY(-12px) rotateX(5deg);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
   box-shadow:
     0 16px 48px 0 rgba(31, 38, 135, 0.2),
     var(--glow-primary),
