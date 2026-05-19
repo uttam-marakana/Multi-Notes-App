@@ -5,7 +5,7 @@ import BoardCard from "./BoardCard";
 import PINModal from "../PINModal";
 import { verifyPIN, grantProtectedAccess } from "../../utils/helpers";
 
-const BoardList = ({ boards, onDelete, onPin }) => {
+const BoardList = ({ boards, onDelete, onPin, onDuplicate }) => {
   const { colors } = useTheme();
   const { currentUser } = useAuth();
   const currentUserId = currentUser?.uid;
@@ -59,6 +59,7 @@ const BoardList = ({ boards, onDelete, onPin }) => {
                     board={board}
                     onDelete={onDelete}
                     onPin={onPin}
+                    onDuplicate={onDuplicate}
                     onRequirePin={handleRequirePin}
                   />
                 ) : null,
@@ -77,6 +78,7 @@ const BoardList = ({ boards, onDelete, onPin }) => {
                   board={board}
                   onDelete={onDelete}
                   onPin={onPin}
+                  onDuplicate={onDuplicate}
                   onRequirePin={handleRequirePin}
                 />
               ) : null,

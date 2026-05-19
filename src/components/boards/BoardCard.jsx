@@ -9,13 +9,16 @@ import {
   hasProtectedAccess,
 } from "../../utils/helpers";
 import { GoStar, GoStarFill } from "react-icons/go";
+import { RiFileCopyLine, RiDeleteBin6Line, RiEdit2Line } from "react-icons/ri";
 import ThreeDotsMenu from "../ThreeDotsMenu";
+
 
 
 export default function BoardCard({
   board,
   onDelete,
   onPin,
+  onDuplicate,
   onRequirePin,
   isDragging = false,
 }) {
@@ -181,6 +184,7 @@ export default function BoardCard({
             {
               label: "Edit",
               onClick: handleEdit,
+              icon: <RiEdit2Line className="svg-size" />,
               disabled: !isOwner,
             },
             {
@@ -190,8 +194,15 @@ export default function BoardCard({
               disabled: !currentUser,
             },
             {
+              label: "Duplicate",
+              onClick: () => onDuplicate?.(board.id),
+              icon: <RiFileCopyLine className="svg-size" />,
+              disabled: !isOwner,
+            },
+            {
               label: "Delete",
               onClick: handleDelete,
+              icon: <RiDeleteBin6Line className="svg-size" />,
               danger: true,
               disabled: !isOwner,
             },
