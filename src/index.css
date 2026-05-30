@@ -1,7 +1,6 @@
 /* Tailwind base, components, and utilities */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
 
 /* Tailwind Utilities */
 @layer utilities {
@@ -2802,6 +2801,7 @@ button > svg {
 .note-manager-header h2 {
   font-size: 1.75rem;
   font-weight: 700;
+  padding: 20px 0;
 }
 
 .note-manager-header p {
