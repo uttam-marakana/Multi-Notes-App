@@ -10,9 +10,13 @@ import AddBoard from "./AddBoard";
 import BoardList from "../components/boards/BoardList";
 import { MdOutlineAddCircleOutline } from "react-icons/md";
 
-export default function BoardManager() {
+export default function BoardManager({
+  searchText = "",
+  protectedOnly = false,
+}) {
   const { currentUser } = useAuth();
   const { boards, deleteBoard, toggleBoardPin, loading, duplicateBoard } = useBoard();
+
 
   const { colors } = useTheme();
   const navigate = useNavigate();
@@ -31,6 +35,11 @@ export default function BoardManager() {
   }, [currentUser]);
 
   const displayBoards = currentUser ? boards : guestBoards;
+
+  // Apply header controls when present (Dashboard passes these props).
+  const appliedSearchText = searchText;
+  const appliedProtectedOnly = protectedOnly;
+
   const pinnedBoardsCount = displayBoards.filter((board) =>
     board.pinnedBy?.includes(currentUser?.uid),
   ).length;
@@ -158,8 +167,11 @@ export default function BoardManager() {
           onDelete={handleDelete}
           onPin={handlePin}
           onDuplicate={duplicateBoard}
+          searchText={appliedSearchText}
+          protectedOnly={appliedProtectedOnly}
         />
       )}
+
 
       {/* EMPTY STATE */}
       {!loading && displayBoards.length === 0 && (

@@ -10,14 +10,7 @@ import { usePagination } from "../../hooks/usePagination";
 
 const PAGE_SIZE_OPTIONS = [10, 15, 25];
 
-const NoteList = ({
-  notes,
-  boardId,
-  onEdit,
-  onDelete,
-  onPin,
-  onClone,
-}) => {
+const NoteList = ({ notes, boardId, onEdit, onDelete, onPin, onClone }) => {
   const { colors } = useTheme();
   const { currentUser } = useAuth();
   const currentUserId = currentUser?.uid;
@@ -30,7 +23,6 @@ const NoteList = ({
   // are handled at the UI layer below.
   // Note: keep hooks order stable (no early returns before hooks)
   const safeNotes = useMemo(() => (Array.isArray(notes) ? notes : []), [notes]);
-
 
   const normalizedQuery = (searchText || "").trim().toLowerCase();
 
@@ -46,7 +38,6 @@ const NoteList = ({
   }, [safeNotes]);
 
   const filtered = useMemo(() => {
-
     const list = Array.from(safeNotes || []);
 
     const base = list.filter((n) => {
@@ -58,7 +49,9 @@ const NoteList = ({
       const title = String(n.title || "").toLowerCase();
       const content = String(n.content || "").toLowerCase();
 
-      return title.includes(normalizedQuery) || content.includes(normalizedQuery);
+      return (
+        title.includes(normalizedQuery) || content.includes(normalizedQuery)
+      );
     });
 
     const pinned = base.filter((n) => n.pinnedBy?.includes(currentUserId));
@@ -66,7 +59,8 @@ const NoteList = ({
 
     const priorityOrder = { high: 0, medium: 1, low: 2 };
     const sortedUnpinned = [...unpinned].sort(
-      (a, b) => priorityOrder[a.priority || "low"] - priorityOrder[b.priority || "low"],
+      (a, b) =>
+        priorityOrder[a.priority || "low"] - priorityOrder[b.priority || "low"],
     );
 
     return { pinned, sortedUnpinned };
@@ -77,7 +71,6 @@ const NoteList = ({
     const sortedUnpinned = filtered?.sortedUnpinned || [];
     return [...pinned, ...sortedUnpinned];
   }, [filtered]);
-
 
   const { pagedItems, PaginationMeta, setPage, setPageSize } = usePagination(
     combinedForPagination,
@@ -115,7 +108,6 @@ const NoteList = ({
             Filters
           </button>
 
-
           <div className="w-[320px] max-w-[70vw]">
             <SearchWithSuggestions
               label="Search"
@@ -134,7 +126,11 @@ const NoteList = ({
         </div>
       </div>
 
-      <Drawer isOpen={filterOpen} title="Note Filters" onClose={() => setFilterOpen(false)}>
+      <Drawer
+        isOpen={filterOpen}
+        title="Note Filters"
+        onClose={() => setFilterOpen(false)}
+      >
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <label className="text-sm text-muted">Priority</label>
@@ -173,7 +169,6 @@ const NoteList = ({
         </div>
       </Drawer>
 
-
       {totalMatches === 0 ? (
         <div
           className="empty-state"
@@ -183,7 +178,9 @@ const NoteList = ({
           }}
         >
           <h3 style={{ color: colors.text }}>No matching notes</h3>
-          <p style={{ color: colors.textMuted }}>Try adjusting search or filters.</p>
+          <p style={{ color: colors.textMuted }}>
+            Try adjusting search or filters.
+          </p>
         </div>
       ) : (
         <>
@@ -238,4 +235,3 @@ const NoteList = ({
 };
 
 export default NoteList;
-

@@ -1,19 +1,41 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { useNavigate } from "react-router-dom";
 import ThemeToggle from "../components/ThemeToggle";
 import BoardManager from "./BoardManager";
 import { CgLogIn, CgLogOut } from "react-icons/cg";
+import SearchWithSuggestions from "../components/common/SearchWithSuggestions";
+import { FaSearch } from "react-icons/fa";
+import { useBoard } from "../contexts/BoardContext";
+
 
 import lightLogo from "../assets/images/primary_light_logo.png";
 import darkLogo from "../assets/images/primary_dark_logo.png";
 
 const Dashboard = () => {
   const { currentUser, logout } = useAuth();
+  const [searchOpen, setSearchOpen] = useState(false);
+
   const { theme, colors } = useTheme();
   const [error, setError] = useState("");
   const navigate = useNavigate();
+
+  const { boards } = useBoard();
+
+  const [searchText, setSearchText] = useState("");
+
+
+  const suggestions = useMemo(() => {
+    const list = Array.isArray(boards) ? boards : [];
+    return list
+      .map((b) => ({
+        id: b.id,
+        label: b.name || "Untitled Board",
+      }))
+      .slice(0, 200);
+  }, [boards]);
+
 
   useEffect(() => {
     // Auto re-lock all on Dashboard visit
@@ -82,8 +104,66 @@ const Dashboard = () => {
         </div>
 
         <div className="dashboard-actions">
+          <div
+            className="dashboard-header-search"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "var(--spacing-md)",
+            }}
+          >
+            <div
+              className="dashboard-search-icon"
+              aria-hidden="true"
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: "999px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                border: "1px solid var(--glass-border)",
+                background: "var(--glass-bg)",
+                color: "var(--color-primary)",
+                flex: "0 0 auto",
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setSearchOpen((v) => !v)}
+                style={{ all: "unset", cursor: "pointer", display: "flex'", alignItems: "center", justifyContent: "center" }}
+                aria-label="Toggle search"
+                aria-expanded={searchOpen}
+              >
+                <FaSearch />
+              </button>
+            </div>
+
+            {/** Search bar toggles visibility by clicking the icon */}
+            {searchOpen && (
+              <div style={{ display: "flex", alignItems: "center", gap: "var(--spacing-md)" }}>
+                <div style={{ width: "min(420px, 55vw)" }}>
+                  <SearchWithSuggestions
+                    label=""
+                    value={searchText}
+                    onChange={setSearchText}
+                    placeholder="Search boards by name or description..."
+                    suggestions={suggestions}
+                    getSuggestionLabel={(s) => s.label}
+                    onPickSuggestion={(s) => setSearchText(s?.label || "")}
+                  />
+                </div>
+
+
+              </div>
+            )}
+
+          </div>
+
           <ThemeToggle />
           {currentUser ? (
+
+
             <button
               onClick={handleLogout}
               className="btn btn-danger"
@@ -124,6 +204,7 @@ const Dashboard = () => {
       <div className="dashboard-content container">
         <BoardManager userId={currentUser?.uid} />
       </div>
+
     </div>
   );
 };
