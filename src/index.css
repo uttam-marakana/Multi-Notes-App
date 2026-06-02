@@ -532,6 +532,22 @@ select:focus {
   animation: borderGlow 2s ease-in-out infinite;
 }
 
+select#pageSize {
+  width: auto;
+}
+
+.block-space {
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg);
+}
+
+label#pagination-lable {
+  display: flex;
+  padding: 0 20px;
+  align-items: center;
+}
+
 input::placeholder,
 textarea::placeholder {
   color: var(--color-text-muted);
