@@ -210,7 +210,11 @@ export default function NoteCard({
             <div className="note-actions-left">
               <button
                 className="btn btn-ghost btn-sm"
-                onClick={handleEdit}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleEdit();
+                }}
                 disabled={!isOwner}
                 title="Edit"
               >
@@ -220,7 +224,11 @@ export default function NoteCard({
 
               <button
                 className="btn btn-ghost btn-sm"
-                onClick={handleDelete}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleDelete();
+                }}
                 disabled={!isOwner}
                 title="Delete"
                 style={{ color: colors.danger }}
@@ -234,7 +242,10 @@ export default function NoteCard({
                 items={[
                   {
                     label: isPinned ? "Unfavourite" : "Favourite",
-                    onClick: handlePin,
+                    onClick: (e) => {
+                      if (e?.stopPropagation) e.stopPropagation();
+                      handlePin();
+                    },
                     icon: (
                       <span style={{ fontSize: "1.1rem" }}>
                         {isPinned ? "★" : "☆"}
@@ -244,7 +255,10 @@ export default function NoteCard({
                   },
                   {
                     label: "Clone",
-                    onClick: handleClone,
+                    onClick: (e) => {
+                      if (e?.stopPropagation) e.stopPropagation();
+                      handleClone();
+                    },
                     icon: <span style={{ fontSize: "1.05rem" }}>⧉</span>,
                     disabled: !isOwner,
                   },

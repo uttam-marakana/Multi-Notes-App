@@ -161,7 +161,11 @@ export default function BoardEdit() {
               >
                 <span className="btn-text">Unlock Board</span>
               </button>
-              <button className="btn btn-outline btn-with-text" onClick={() => navigate("/" )}>
+              <button
+                type="button"
+                className="btn btn-outline btn-with-text"
+                onClick={() => navigate("/")}
+              >
                 <span className="btn-text">Back</span>
               </button>
             </div>

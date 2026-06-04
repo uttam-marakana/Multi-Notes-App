@@ -1,0 +1,19 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Files uploaded by the logged-in user.
+    // NoteContext uploads to:
+    //   {uid}/boards/{boardId}/notes/{...filename}
+    match /{userId}/boards/{boardId}/notes/{allPaths=**} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+
+    // Default deny
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
+

@@ -1,7 +1,6 @@
 /* Tailwind base, components, and utilities */
 @import "tailwindcss";
 
-
 /* Tailwind Utilities */
 @layer utilities {
   .btn-success {
@@ -156,7 +155,7 @@ body {
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
   box-shadow:
-    0 12px 40px 0 rgba(31, 38, 135, 0.15),
+    0px 0px 20px 4px rgb(255 255 255 / 58%),
     var(--glow-primary);
 }
 
@@ -1653,11 +1652,17 @@ textarea::placeholder {
 
 .board-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  /* Phase 4: responsive grid expectations
+     - desktop: ~4 cards per row
+     - tablet: ~2 cards per row
+     - mobile: 1-2 cards per row
+  */
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--spacing-lg);
   padding: var(--spacing-md);
   animation: fadeIn 0.3s ease;
 }
+
 
 .board-grid.dragging-over {
   background-color: var(--color-background);
@@ -2413,7 +2418,6 @@ textarea::placeholder {
   perspective: 1000px;
 }
 
-
 .note-card::after {
   content: "";
   position: absolute;
@@ -2482,7 +2486,6 @@ textarea::placeholder {
   word-break: break-word;
 }
 
-
 .three-dots-menu {
   user-select: none;
 }
@@ -2502,7 +2505,6 @@ textarea::placeholder {
   flex-wrap: wrap;
 }
 
-
 .note-meta small {
   line-height: 1;
 }
@@ -2520,7 +2522,6 @@ textarea::placeholder {
   font-size: 0.9rem;
   flex: 0 0 auto;
 }
-
 
 .note-actions .btn-ghost {
   color: var(--color-text);
@@ -2540,27 +2541,32 @@ button > svg {
 /* Any button that contains both an icon (svg/span with aria-hidden) and text should become icon-only on small screens.
    We do this by targeting direct text nodes / span.label and hiding them on mobile. */
 @media (max-width: 640px) {
+  /* Switch icon+text buttons to icon-only on mobile across the site */
   .btn,
   button {
-    /* keep width auto for icon-only buttons */
     white-space: nowrap;
   }
 
-  /* Hide any explicit label span inside buttons */
+  /* Hide common label span patterns used across the app */
   .btn .btn-label,
   button .btn-label,
   .btn .btn-text,
   button .btn-text,
-
   .btn span.label,
   button span.label,
   .btn span.text,
-  button span.text {
+  button span.text,
+  .btn-with-text .btn-text,
+  .btn-with-text span,
+  .btn-with-text div {
     display: none !important;
   }
 
-  /* For common layouts: if button contains an icon svg and any text node, hide text-like spans */
-  /* ThreeDotsMenu dropdown button stays as icon (it only renders svg) */
+  /* If a button contains an icon span plus any text span/div, hide the text span/div */
+  .btn span[aria-hidden="true"] + span,
+  .btn span[aria-hidden="true"] ~ span {
+    display: none !important;
+  }
 }
 
 .svg-size {
@@ -2879,7 +2885,6 @@ button > svg {
 /* ----- Card action rows (responsive) ---------------------------- */
 .board-actions-row,
 .note-actions-row {
-
   display: flex;
   width: 100%;
   align-items: center;
@@ -2918,8 +2923,6 @@ button > svg {
     margin-top: var(--spacing-xs);
   }
 }
-
-
 
 /* ----- RESPONSIVE DESIGN ---------------------------- */
 
@@ -3075,7 +3078,6 @@ button > svg {
     flex: 0 0 auto;
   }
 
-
   .board-actions .btn {
     font-size: 0.7rem;
     padding: var(--spacing-xs) var(--spacing-xs);
@@ -3088,9 +3090,10 @@ button > svg {
   }
 
   .board-grid {
-    grid-template-columns: repeat(auto-fill, minmax(225px, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--spacing-md);
   }
+
 
   .board-section h3 {
     font-size: 1.25rem;
@@ -3345,9 +3348,11 @@ button > svg {
   }
 
   .board-grid {
-    grid-template-columns: 1fr;
+    /* mobile: allow 1-2 cards per row depending on viewport */
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: var(--spacing-md);
   }
+
 
   .board-section h3 {
     font-size: 1.1rem;
@@ -3467,7 +3472,7 @@ button > svg {
     width: 100%;
     display: flex;
     flex-direction: row;
-    justify-content: flex-end;
+    /* justify-content: flex-end; */
     align-items: center;
     gap: var(--spacing-xs);
   }
@@ -3477,13 +3482,11 @@ button > svg {
     gap: var(--spacing-xs);
   }
 
-
   .note-actions .btn {
     padding: var(--spacing-xs);
     font-size: 0.8rem;
     flex: 0 0 auto;
   }
-
 
   .note-grid {
     grid-template-columns: 1fr;

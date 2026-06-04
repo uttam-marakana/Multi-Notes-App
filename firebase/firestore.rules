@@ -1,0 +1,57 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && request.auth.uid == userId;
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Boards
+    match /boards/{boardId} {
+      allow read: if request.auth != null
+        && (resource.data.userId == request.auth.uid || resource.data.ownerId == request.auth.uid);
+
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid;
+
+      allow update: if request.auth != null
+        && resource.data.userId == request.auth.uid;
+
+      allow delete: if request.auth != null
+        && resource.data.userId == request.auth.uid;
+    }
+
+    // Notes
+    match /notes/{noteId} {
+      allow read: if request.auth != null
+        && (resource.data.userId == request.auth.uid || resource.data.ownerId == request.auth.uid);
+
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid;
+
+      allow update: if request.auth != null
+        && resource.data.userId == request.auth.uid;
+
+      allow delete: if request.auth != null
+        && resource.data.userId == request.auth.uid;
+    }
+
+    // Favorites are implemented in the app as `pinnedBy` arrays on the
+    // boards/notes documents themselves (no separate `favorites` collection).
+    // Keeping this section deny-all prevents accidental access to a
+    // non-existent schema.
+    match /favorites/{favoriteId} {
+      allow read, write: if false;
+    }
+
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+

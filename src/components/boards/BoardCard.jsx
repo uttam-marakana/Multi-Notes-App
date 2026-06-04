@@ -111,6 +111,16 @@ export default function BoardCard({
     runProtectedAction(() => onDelete(board.id));
   };
 
+  const handleCardClick = () => {
+    // Entire card navigates to the notes list for this board
+    handleViewNotes();
+  };
+
+  const stopClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
   return (
     <article
       className={`board-card ${isDragging ? "dragging" : ""}`}
@@ -119,7 +129,14 @@ export default function BoardCard({
         backgroundColor: colors.surface,
         borderColor: colors.border,
       }}
+      role="button"
+      tabIndex={0}
+      onClick={handleCardClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") handleCardClick();
+      }}
     >
+
       <div className="board-card-top">
         <div className="board-card-header">
           <div
@@ -179,28 +196,40 @@ export default function BoardCard({
           <div className="board-actions-left">
             <button
               className="btn btn-ghost btn-sm"
-              onClick={handleEdit}
+              onClick={(e) => {
+                stopClick(e);
+                handleEdit();
+              }}
               disabled={!isOwner}
               title="Edit"
             >
               <RiEdit2Line className="svg-size" />
             </button>
 
+
             <button
               className="btn btn-ghost btn-sm"
-              onClick={handleDelete}
+              onClick={(e) => {
+                stopClick(e);
+                handleDelete();
+              }}
               disabled={!isOwner}
               title="Delete"
               style={{ color: colors.danger }}
             >
+
               <RiDeleteBin6Line className="svg-size" />
             </button>
 
             <ThreeDotsMenu
               items={[
-                {
-                  label: isPinned ? "Unfavourite" : "Favourite",
-                  onClick: handleTogglePin,
+                  {
+                    label: isPinned ? "Unfavourite" : "Favourite",
+                    onClick: (e) => {
+                      if (e?.stopPropagation) e.stopPropagation();
+                      handleTogglePin();
+                    },
+
                   icon: isPinned ? (
                     <GoStarFill className="svg-size" />
                   ) : (
@@ -210,7 +239,11 @@ export default function BoardCard({
                 },
                 {
                   label: "Duplicate",
-                  onClick: () => onDuplicate?.(board.id),
+                  onClick: (e) => {
+                    if (e?.stopPropagation) e.stopPropagation();
+                    onDuplicate?.(board.id);
+                  },
+
                   icon: <RiFileCopyLine className="svg-size" />,
                   disabled: !isOwner,
                 },
