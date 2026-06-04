@@ -2518,8 +2518,9 @@ textarea::placeholder {
 .note-actions .btn {
   padding: var(--spacing-xs) var(--spacing-sm);
   font-size: 0.9rem;
-  flex: 1;
+  flex: 0 0 auto;
 }
+
 
 .note-actions .btn-ghost {
   color: var(--color-text);
@@ -2533,6 +2534,33 @@ textarea::placeholder {
 button > svg {
   width: 32px;
   height: 32px;
+}
+
+/* ----- MOBILE ICON-ONLY TRANSFORM (text+icon buttons) ----- */
+/* Any button that contains both an icon (svg/span with aria-hidden) and text should become icon-only on small screens.
+   We do this by targeting direct text nodes / span.label and hiding them on mobile. */
+@media (max-width: 640px) {
+  .btn,
+  button {
+    /* keep width auto for icon-only buttons */
+    white-space: nowrap;
+  }
+
+  /* Hide any explicit label span inside buttons */
+  .btn .btn-label,
+  button .btn-label,
+  .btn .btn-text,
+  button .btn-text,
+
+  .btn span.label,
+  button span.label,
+  .btn span.text,
+  button span.text {
+    display: none !important;
+  }
+
+  /* For common layouts: if button contains an icon svg and any text node, hide text-like spans */
+  /* ThreeDotsMenu dropdown button stays as icon (it only renders svg) */
 }
 
 .svg-size {
@@ -2830,6 +2858,69 @@ button > svg {
   padding: var(--spacing-sm) var(--spacing-lg);
 }
 
+/* ----- Mobile icon-only buttons: hide button text on narrow screens */
+.btn-with-text .btn-text {
+  display: inline;
+}
+
+@media (max-width: 480px) {
+  .btn-with-text {
+    width: 42px;
+    min-width: 42px;
+    padding-left: 0.6rem;
+    padding-right: 0.6rem;
+  }
+
+  .btn-with-text .btn-text {
+    display: none;
+  }
+}
+
+/* ----- Card action rows (responsive) ---------------------------- */
+.board-actions-row,
+.note-actions-row {
+
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.board-actions-left,
+.note-actions-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
+.board-actions-view {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 480px) {
+  .board-actions-row {
+    align-items: stretch;
+  }
+
+  .board-actions-left {
+    flex: 1;
+    gap: 0.35rem;
+  }
+
+  .board-actions-view {
+    flex: 0 0 auto;
+  }
+
+  .note-actions {
+    margin-top: var(--spacing-xs);
+  }
+}
+
+
+
 /* ----- RESPONSIVE DESIGN ---------------------------- */
 
 @media (max-width: 1024px) {
@@ -2962,6 +3053,28 @@ button > svg {
   .board-actions {
     gap: var(--spacing-xs);
   }
+
+  /* Prevent card actions from overflowing on mobile */
+  .board-actions-row {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    gap: var(--spacing-xs);
+  }
+
+  .board-actions-left {
+    display: flex;
+    gap: var(--spacing-xs);
+  }
+
+  .board-actions-view {
+    margin-left: auto;
+    white-space: nowrap;
+    flex: 0 0 auto;
+  }
+
 
   .board-actions .btn {
     font-size: 0.7rem;
@@ -3349,10 +3462,28 @@ button > svg {
     margin-top: var(--spacing-sm);
   }
 
+  /* Prevent card actions from overflowing on mobile */
+  .note-actions-row {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    gap: var(--spacing-xs);
+  }
+
+  .note-actions-left {
+    display: flex;
+    gap: var(--spacing-xs);
+  }
+
+
   .note-actions .btn {
     padding: var(--spacing-xs);
     font-size: 0.8rem;
+    flex: 0 0 auto;
   }
+
 
   .note-grid {
     grid-template-columns: 1fr;

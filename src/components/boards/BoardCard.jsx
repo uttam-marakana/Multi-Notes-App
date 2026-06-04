@@ -175,53 +175,63 @@ export default function BoardCard({
       </div>
 
       <div className="board-actions">
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <button
-            className="btn btn-ghost btn-sm"
-            onClick={handleEdit}
-            disabled={!isOwner}
-            title="Edit"
-            style={{ marginRight: "0.5rem" }}
-          >
-            <RiEdit2Line className="svg-size" />
-          </button>
+        <div className="board-actions-row">
+          <div className="board-actions-left">
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={handleEdit}
+              disabled={!isOwner}
+              title="Edit"
+            >
+              <RiEdit2Line className="svg-size" />
+            </button>
+
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={handleDelete}
+              disabled={!isOwner}
+              title="Delete"
+              style={{ color: colors.danger }}
+            >
+              <RiDeleteBin6Line className="svg-size" />
+            </button>
+
+            <ThreeDotsMenu
+              items={[
+                {
+                  label: isPinned ? "Unfavourite" : "Favourite",
+                  onClick: handleTogglePin,
+                  icon: isPinned ? (
+                    <GoStarFill className="svg-size" />
+                  ) : (
+                    <GoStar className="svg-size" />
+                  ),
+                  disabled: !currentUser,
+                },
+                {
+                  label: "Duplicate",
+                  onClick: () => onDuplicate?.(board.id),
+                  icon: <RiFileCopyLine className="svg-size" />,
+                  disabled: !isOwner,
+                },
+              ]}
+              iconColor={colors.textMuted}
+            />
+          </div>
 
           <button
-            className="btn btn-ghost btn-sm"
-            onClick={handleDelete}
-            disabled={!isOwner}
-            title="Delete"
-            style={{ color: colors.danger, marginRight: "0.5rem" }}
-          >
-            <RiDeleteBin6Line className="svg-size" />
-          </button>
-
-          <ThreeDotsMenu
-            items={[
-              {
-                label: isPinned ? "Unfavourite" : "Favourite",
-                onClick: handleTogglePin,
-                icon: isPinned ? <GoStarFill className="svg-size" /> : <GoStar className="svg-size" />,
-                disabled: !currentUser,
-              },
-              {
-                label: "Duplicate",
-                onClick: () => onDuplicate?.(board.id),
-                icon: <RiFileCopyLine className="svg-size" />,
-                disabled: !isOwner,
-              },
-            ]}
-            iconColor={colors.textMuted}
-          />
-
-          <button
-            className="btn btn-primary btn-sm"
+            className="btn btn-primary btn-sm btn-with-text board-actions-view"
             onClick={handleViewNotes}
-            style={{ marginLeft: "0.5rem" }}
+            title="View Notes"
           >
-            View Notes
+            <span className="svg-size" aria-hidden>
+              🗂️
+            </span>
+            <span className="btn-label">View Notes</span>
           </button>
+
         </div>
+
       </div>
     </article>
   );

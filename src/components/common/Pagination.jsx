@@ -10,36 +10,12 @@ export default function Pagination({
 
   const { page, totalPages, pageSize } = meta;
 
+
   const canPrev = page > 1;
   const canNext = page < totalPages;
 
-  const getPageNumbers = () => {
-    const pages = [];
+  const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
-    if (totalPages <= 7) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-      return pages;
-    }
-
-    pages.push(1);
-
-    if (page > 3) pages.push("...");
-
-    const start = Math.max(2, page - 1);
-    const end = Math.min(totalPages - 1, page + 1);
-
-    for (let i = start; i <= end; i++) {
-      pages.push(i);
-    }
-
-    if (page < totalPages - 2) pages.push("...");
-
-    pages.push(totalPages);
-
-    return pages;
-  };
 
   return (
     <div className="w-full border-t border-base-300 pt-4">
@@ -82,28 +58,20 @@ export default function Pagination({
           </button>
 
           <div className="flex items-center gap-1">
-            {getPageNumbers().map((item, index) =>
-              item === "..." ? (
-                <span
-                  key={`ellipsis-${index}`}
-                  className="px-2 text-base-content/50"
-                >
-                  ...
-                </span>
-              ) : (
-                <button
-                  key={item}
-                  type="button"
-                  onClick={() => onPageChange?.(item)}
-                  className={`btn btn-sm min-w-[36px] ${
-                    page === item ? "btn-primary" : "btn-ghost"
-                  }`}
-                >
-                  {item}
-                </button>
-              ),
-            )}
+            {pageNumbers.map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => onPageChange?.(p)}
+                className={`btn btn-sm min-w-[36px] ${
+                  page === p ? "btn-primary" : "btn-ghost"
+                }`}
+              >
+                {p}
+              </button>
+            ))}
           </div>
+
 
           <button
             type="button"

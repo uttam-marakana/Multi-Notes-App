@@ -231,7 +231,7 @@ const NoteList = ({ notes, boardId, onEdit, onDelete, onPin, onClone }) => {
         </>
       )}
     </div>
-  );
+  );  
 };
 
 export default NoteList;
