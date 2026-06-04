@@ -156,15 +156,16 @@ export default function BoardEdit() {
             </p>
             <div className="form-actions">
               <button
-                className="btn btn-primary"
+                className="btn btn-primary btn-with-text"
                 onClick={() => setShowPINModal(true)}
               >
-                Unlock Board
+                <span className="btn-text">Unlock Board</span>
               </button>
-              <button className="btn btn-outline" onClick={() => navigate("/")}>
-                Back
+              <button className="btn btn-outline btn-with-text" onClick={() => navigate("/" )}>
+                <span className="btn-text">Back</span>
               </button>
             </div>
+
           </div>
         </div>
 
@@ -237,17 +238,18 @@ export default function BoardEdit() {
                   <div className="flex items-center gap-2">
                     <span>Protect Board</span>
                   </div>
-                  <button
-                    type="button"
-                    className="btn btn-outline btn-sm"
-                    onClick={() => {
-                      setIsProtected((prev) => !prev);
-                      setPin("");
-                      setPinConfirm("");
-                    }}
-                  >
-                    {isProtected ? "Disable" : "Enable"}
-                  </button>
+                <button
+                  type="button"
+                  className="btn btn-outline btn-sm btn-with-text"
+                  onClick={() => {
+                    setIsProtected((prev) => !prev);
+                    setPin("");
+                    setPinConfirm("");
+                  }}
+                >
+                  <span className="btn-text">{isProtected ? "Disable" : "Enable"}</span>
+                </button>
+
                 </div>
 
                 {isProtected && (
@@ -276,19 +278,22 @@ export default function BoardEdit() {
             <div className="form-actions">
               <button
                 type="button"
-                className="btn btn-outline"
+                className="btn btn-outline btn-with-text"
                 onClick={() => navigate(-1)}
               >
-                Cancel
+                <span className="btn-text">Cancel</span>
               </button>
               <button
                 type="submit"
-                className="btn btn-primary"
+                className="btn btn-primary btn-with-text"
                 disabled={saving}
               >
-                {saving ? "Saving..." : "Save Board"}
+                <span className="btn-text">
+                  {saving ? "Saving..." : "Save Board"}
+                </span>
               </button>
             </div>
+
           </form>
         </div>
       </div>

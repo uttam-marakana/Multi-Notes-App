@@ -137,11 +137,13 @@ export default function AddBoard({ onSuccess }) {
             <button
               type="button"
               onClick={() => setShowAdvanced(!showAdvanced)}
+              className="btn-with-text"
             >
               {showAdvanced ? <TiArrowSortedDown /> : <TiArrowSortedUp />}{" "}
-              Advanced
+              <span className="btn-text">Advanced</span>
             </button>
           </div>
+
 
           {showAdvanced && (
             <div className="advanced-box active">
@@ -176,9 +178,10 @@ export default function AddBoard({ onSuccess }) {
             </div>
           )}
 
-          <button disabled={!isValid || loading}>
-            {loading ? "Creating..." : "Create Board"}
+          <button disabled={!isValid || loading} className="btn-with-text">
+            <span className="btn-text">{loading ? "Creating..." : "Create Board"}</span>
           </button>
+
         </form>
       </div>
     </div>

@@ -234,15 +234,19 @@ export default function NoteEdit() {
             </p>
             <div className="form-actions">
               <button
-                className="btn btn-primary"
+                className="btn btn-primary btn-with-text"
                 onClick={() => setShowPINModal(true)}
               >
-                Unlock
+                <span className="btn-text">Unlock</span>
               </button>
-              <button className="btn btn-outline" onClick={() => navigate(-1)}>
-                Back
+              <button
+                className="btn btn-outline btn-with-text"
+                onClick={() => navigate(-1)}
+              >
+                <span className="btn-text">Back</span>
               </button>
             </div>
+
           </div>
         </div>
 
@@ -473,19 +477,22 @@ export default function NoteEdit() {
             <div className="form-actions">
               <button
                 type="button"
-                className="btn btn-outline"
+                className="btn btn-outline btn-with-text"
                 onClick={() => navigate(-1)}
               >
-                Cancel
+                <span className="btn-text">Cancel</span>
               </button>
               <button
                 type="submit"
-                className="btn btn-primary"
+                className="btn btn-primary btn-with-text"
                 disabled={loading}
               >
-                {loading ? "Saving..." : "Save Note"}
+                <span className="btn-text">
+                  {loading ? "Saving..." : "Save Note"}
+                </span>
               </button>
             </div>
+
           </form>
         </div>
       </div>

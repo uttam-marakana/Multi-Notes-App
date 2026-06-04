@@ -350,19 +350,22 @@ export default function AddNote() {
             <div className="form-actions">
               <button
                 type="button"
-                className="btn btn-ghost"
+                className="btn btn-ghost btn-with-text"
                 onClick={() => navigate(-1)}
               >
-                Cancel
+                <span className="btn-text">Cancel</span>
               </button>
               <button
                 type="submit"
-                className="btn btn-primary"
+                className="btn btn-primary btn-with-text"
                 disabled={loading}
               >
-                {loading ? "Creating..." : "✨ Create Note"}
+                <span className="btn-text">
+                  {loading ? "Creating..." : "✨ Create Note"}
+                </span>
               </button>
             </div>
+
           </form>
         </div>
       </div>
