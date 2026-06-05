@@ -70,11 +70,26 @@ export default function BoardEdit() {
       return;
     }
 
-    // Optional PIN validation - only if changed
-    if (pin && pinConfirm && pin.length === 4) {
-      if (pin !== pinConfirm) {
-        toast.error("PINs do not match");
-        return;
+    // PIN validation rules (Phase 5 parity with AddBoard)
+    // - If protection is enabled and user entered any PIN value, require both fields.
+    // - PIN must be exactly 4 digits and match confirmation.
+    if (isProtected) {
+      const hasAnyPinField = Boolean(pin) || Boolean(pinConfirm);
+      if (hasAnyPinField) {
+        if (!pin || !pinConfirm) {
+          toast.error("PIN and confirmation are required");
+          return;
+        }
+
+        if (pin.length !== 4) {
+          toast.error("PIN must be 4 digits");
+          return;
+        }
+
+        if (pin !== pinConfirm) {
+          toast.error("PIN mismatch");
+          return;
+        }
       }
     }
 

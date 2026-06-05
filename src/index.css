@@ -2877,8 +2877,15 @@ button > svg {
     padding-right: 0.6rem;
   }
 
-  .btn-with-text .btn-text {
+.btn-with-text .btn-text {
     display: none;
+  }
+
+  /* Also support the common pattern <span class="btn-label">... (used in some cards)
+     so icon+text buttons become icon-only on mobile. */
+  .btn .btn-label,
+  button .btn-label {
+    display: none !important;
   }
 }
 
