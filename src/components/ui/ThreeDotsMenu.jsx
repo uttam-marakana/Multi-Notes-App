@@ -14,22 +14,36 @@ export default function ThreeDotsMenu({
   useEffect(() => {
     if (!open) return;
 
-    const onDocClick = (e) => {
-      const el = rootRef.current;
-      if (!el) return;
-      if (!el.contains(e.target)) {
+    const handleOutsideClick = (e) => {
+      if (!rootRef.current?.contains(e.target)) {
         setOpen(false);
         onClose?.();
       }
     };
 
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
+    const handleEscape = (e) => {
+      if (e.key === "Escape") {
+        setOpen(false);
+        onClose?.();
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("keydown", handleEscape);
+    };
   }, [open, onClose]);
+
+  const closeMenu = () => {
+    setOpen(false);
+    onClose?.();
+  };
 
   return (
     <div
-      className="three-dots-menu"
       ref={rootRef}
       style={{
         position: "relative",
@@ -40,7 +54,9 @@ export default function ThreeDotsMenu({
       <button
         type="button"
         aria-label="Open menu"
-        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((prev) => !prev)}
         className="three-dots-button btn btn-ghost btn-sm"
         style={{
           padding: "0.5rem",
@@ -57,12 +73,14 @@ export default function ThreeDotsMenu({
 
       {open && (
         <div
+          role="menu"
           className="three-dots-dropdown"
           style={{
             position: "absolute",
             right: 0,
             top: "calc(100% + 0.5rem)",
-            minWidth: 150,
+            minWidth: "150px",
+            maxWidth: "220px",
             zIndex: 999,
             display: "flex",
             flexDirection: "column",
@@ -72,6 +90,7 @@ export default function ThreeDotsMenu({
             boxShadow: "var(--shadow-md)",
             padding: "0.25rem",
             backdropFilter: "blur(10px)",
+            overflow: "hidden",
             ...menuStyle,
           }}
         >
@@ -88,21 +107,21 @@ export default function ThreeDotsMenu({
               <button
                 key={`${label}-${idx}`}
                 type="button"
-                className="three-dots-item"
+                role="menuitem"
                 disabled={disabled}
+                className="three-dots-item"
                 onClick={() => {
                   if (disabled) return;
-                  setOpen(false);
-                  onClose?.();
+
+                  closeMenu();
                   onClick?.();
                 }}
                 style={{
                   width: "100%",
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "flex-start",
                   gap: "0.5rem",
-                  padding: "0.5rem 0.75rem",
+                  padding: "0.625rem 0.75rem",
                   border: "none",
                   background: "transparent",
                   color: danger ? "var(--color-danger)" : "var(--color-text)",
@@ -110,9 +129,21 @@ export default function ThreeDotsMenu({
                   cursor: disabled ? "not-allowed" : "pointer",
                   opacity: disabled ? 0.6 : 1,
                   borderRadius: "var(--radius-sm)",
+                  textAlign: "left",
                 }}
               >
-                {icon && <span style={{ display: "inline-flex" }}>{icon}</span>}
+                {icon && (
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {icon}
+                  </span>
+                )}
+
                 <span>{label}</span>
               </button>
             );
