@@ -67,16 +67,78 @@ notes/{id}
 5. Drag-drop reorder → auto-save
 6. Dashboard → **All re-locked**
 
-## 📂 Structure
+## 📂 Folder Structure (Reorganized)
 
-```
+The app is split into **feature folders** (boards/notes/auth) and **routing layers** (public/protected/trash).
+
+```txt
 src/
-├── components/           # ColorPicker, PinInput, PINModal, BoardCard, NoteCard
-├── contexts/            # AuthContext, BoardContext, NoteContext, ThemeContext
-├── pages/              # Dashboard, AddBoard, BoardEdit, NoteManager, AddNote, NoteEdit
-├── config/             # firebase.js
-└── utils/              # PIN hash/verify, guestStorage
+├── components/
+│   ├── ui/                      # Pure UI primitives (buttons, modals, skeletons)
+│   │   ├── *.jsx                # e.g. ThemeToggle, Drawer, Pagination, etc.
+│   ├── common/                  # Shared non-feature UI used across boards/notes/pages
+│   │   ├── *.jsx                # e.g. SearchWithSuggestions
+│   ├── auth/                    # Auth-related UI wrappers
+│   │   └── ProtectedRoute.jsx
+│   ├── boards/                  # Board-specific presentational components
+│   │   ├── BoardCard.jsx
+│   │   └── BoardList.jsx
+│   └── notes/                   # Note-specific presentational components
+│       ├── NoteCard.jsx
+│       └── NoteList.jsx
+│
+├── pages/
+│   ├── public/                 # Routes accessible without protection
+│   │   ├── Dashboard.jsx
+│   │   ├── Login.jsx
+│   │   ├── SignUp.jsx
+│   │   ├── ForgotPassword.jsx
+│   │   └── NotFound.jsx
+│   ├── protected/              # Routes requiring auth
+│   │   ├── BoardManager.jsx
+│   │   ├── AddBoard.jsx
+│   │   ├── BoardEdit.jsx
+│   │   ├── NoteManager.jsx
+│   │   ├── AddNote.jsx
+│   │   ├── NoteEdit.jsx
+│   │   ├── NoteDetails.jsx
+│   │   └── NoteItem.jsx
+│   └── trash/                  # SessionStorage / archived views
+│       ├── TrashBoards.jsx
+│       └── TrashNotes.jsx
+│
+├── contexts/                   # React Context providers (app state)
+│   ├── AuthContext.jsx
+│   ├── BoardContext.jsx
+│   ├── NoteContext.jsx
+│   └── ThemeContext.jsx
+│
+├── config/                     # Third-party initialization (Firebase)
+│   └── firebase.js
+│
+├── services/                   # (Reserved) server/data services layer
+├── state/                      # (Reserved) state management (non-context)
+├── constants/                  # (Reserved) app-wide constants
+├── types/                      # (Reserved) shared types
+│
+├── hooks/                       # Reusable hooks (pagination/debounce)
+│   ├── useDebouncedValue.js
+│   └── usePagination.js
+│
+├── lib/                         # (Reserved) shared pure helpers
+│
+└── utils/                      # Shared pure utilities
+    ├── helpers.js               # PIN hashing/verification, protected-access, formatting
+    ├── guestStorage.js
+    └── trashStorage.js
 ```
+
+### Directory conventions
+- **components/**: UI only. Business logic lives in **contexts/** (Firebase CRUD) or **pages/** (screen composition).
+- **pages/**: route “screens” only. No low-level storage calls in pages.
+- **contexts/**: Firebase reads/writes, subscriptions, and derived state.
+- **utils/**: small pure helpers used by contexts/components.
+
 
 ## 🛠 Tech Stack
 
