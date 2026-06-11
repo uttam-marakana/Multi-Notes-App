@@ -9,21 +9,26 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 
 // Import Components and Routes
 import ProtectedRoute from "./components/auth/ProtectedRoute";
-import ErrorBoundary from "./components/ErrorBoundary";
-import LoadingSpinner from "./components/LoadingSpinner";
+import ErrorBoundary from "./components/ui/ErrorBoundary";
+import LoadingSpinner from "./components/ui/LoadingSpinner";
 
-import Login from "./pages/Login";
-import SignUp from "./pages/SignUp";
-import ForgotPassword from "./pages/ForgotPassword";
-import Dashboard from "./pages/Dashboard";
+import Login from "./pages/public/Login";
+import SignUp from "./pages/public/SignUp";
+import ForgotPassword from "./pages/public/ForgotPassword";
+import Dashboard from "./pages/public/Dashboard";
 
-import BoardManager from "./pages/BoardManager";
-import AddBoard from "./pages/AddBoard";
-import BoardEdit from "./pages/BoardEdit";
-import NoteManager from "./pages/NoteManager";
-import AddNote from "./pages/AddNote";
-import NoteEdit from "./pages/NoteEdit";
-import NotFound from "./pages/NotFound";
+import BoardManager from "./pages/protected/BoardManager";
+import AddBoard from "./pages/protected/AddBoard";
+import BoardEdit from "./pages/protected/BoardEdit";
+import NoteManager from "./pages/protected/NoteManager";
+import AddNote from "./pages/protected/AddNote";
+import NoteEdit from "./pages/protected/NoteEdit";
+import NoteDetails from "./pages/protected/NoteDetails";
+import TrashBoards from "./pages/trash/TrashBoards";
+import TrashNotes from "./pages/trash/TrashNotes";
+import NotFound from "./pages/public/NotFound";
+
+
 
 function App() {
   return (
@@ -101,8 +106,22 @@ function App() {
                         }
                       />
 
-                      {/* Redirect unknown paths to login */}
+                      <Route
+                        path="/notes/details/:id"
+                        element={
+                          <ProtectedRoute>
+                            <NoteDetails />
+                          </ProtectedRoute>
+                        }
+                      />
+
+                      {/* Trash (UI-only, sessionStorage) */}
+                      <Route path="/trash/boards" element={<TrashBoards />} />
+                      <Route path="/trash/notes" element={<TrashNotes />} />
+
+                      {/* Redirect unknown paths */}
                       <Route path="*" element={<NotFound />} />
+
                     </Routes>
                   </Suspense>
                 </div>

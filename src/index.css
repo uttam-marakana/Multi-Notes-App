@@ -1663,7 +1663,6 @@ textarea::placeholder {
   animation: fadeIn 0.3s ease;
 }
 
-
 .board-grid.dragging-over {
   background-color: var(--color-background);
   border-radius: var(--radius-lg);
@@ -2487,11 +2486,25 @@ textarea::placeholder {
 }
 
 .three-dots-menu {
-  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .three-dots-item:disabled {
   cursor: not-allowed;
+}
+
+.three-dots-menu > button {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+
+  padding: 0 !important;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .note-meta {
@@ -2532,40 +2545,120 @@ textarea::placeholder {
   background-color: var(--color-border);
 }
 
-button > svg {
-  width: 32px;
-  height: 32px;
+/* ----- NOTE CARD ACTION BUTTONS ---------------------------- */
+
+.note-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-/* ----- MOBILE ICON-ONLY TRANSFORM (text+icon buttons) ----- */
-/* Any button that contains both an icon (svg/span with aria-hidden) and text should become icon-only on small screens.
-   We do this by targeting direct text nodes / span.label and hiding them on mobile. */
-@media (max-width: 640px) {
-  /* Switch icon+text buttons to icon-only on mobile across the site */
-  .btn,
-  button {
-    white-space: nowrap;
+.note-actions-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-wrap: nowrap;
+  min-width: 0;
+  width: 100%;
+}
+
+.note-card-action-btn,
+.three-dots-menu {
+  flex-shrink: 0;
+}
+
+.note-card-action-btn {
+  flex-shrink: 0;
+}
+
+.note-card-action-btn .svg-size {
+  width: 16px;
+  height: 16px;
+}
+
+/* ===== TABLET ===== */
+@media (max-width: 1024px) {
+  .note-actions-left {
+    gap: 0.75rem;
   }
 
-  /* Hide common label span patterns used across the app */
-  .btn .btn-label,
-  button .btn-label,
-  .btn .btn-text,
-  button .btn-text,
-  .btn span.label,
-  button span.label,
-  .btn span.text,
-  button span.text,
-  .btn-with-text .btn-text,
-  .btn-with-text span,
-  .btn-with-text div {
-    display: none !important;
+  .note-card-action-btn .btn-label {
+    display: none;
   }
 
-  /* If a button contains an icon span plus any text span/div, hide the text span/div */
-  .btn span[aria-hidden="true"] + span,
-  .btn span[aria-hidden="true"] ~ span {
-    display: none !important;
+  .note-card-action-btn {
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+
+    padding: 0.5rem !important;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .note-card-action-btn .svg-size {
+    width: 18px;
+    height: 18px;
+  }
+
+  .three-dots-menu > button {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+  }
+}
+
+/* ===== MOBILE ===== */
+@media (max-width: 768px) {
+  .note-actions-left {
+    gap: 0.5rem;
+  }
+
+  .note-card-action-btn {
+    width: 36px !important;
+    min-width: 36px;
+    height: 36px;
+
+    padding: 0.4rem !important;
+  }
+
+  .note-card-action-btn .svg-size {
+    width: 16px;
+    height: 16px;
+  }
+
+  .three-dots-menu > button {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+  }
+}
+
+/* ===== SMALL MOBILE ===== */
+@media (max-width: 480px) {
+  .note-actions-left {
+    gap: 0.375rem;
+  }
+
+  .note-card-action-btn {
+    width: 34px;
+    min-width: 34px;
+    height: 34px;
+
+    padding: 0.35rem !important;
+  }
+
+  .note-card-action-btn .svg-size {
+    width: 15px;
+    height: 15px;
+  }
+
+  .three-dots-menu > button {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
   }
 }
 
@@ -2877,7 +2970,7 @@ button > svg {
     padding-right: 0.6rem;
   }
 
-.btn-with-text .btn-text {
+  .btn-with-text .btn-text {
     display: none;
   }
 
@@ -2903,7 +2996,8 @@ button > svg {
 .note-actions-left {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: center;
+  gap: 2.5rem;
   flex-wrap: nowrap;
   min-width: 0;
 }
@@ -2929,6 +3023,13 @@ button > svg {
   .note-actions {
     margin-top: var(--spacing-xs);
   }
+}
+
+/* ----- Skeleton loader ---------------------------- */
+
+/* Used by Phase 13 */
+.skeleton-card {
+  position: relative;
 }
 
 /* ----- RESPONSIVE DESIGN ---------------------------- */
@@ -2980,6 +3081,26 @@ button > svg {
   .navbar-nav {
     flex-wrap: wrap;
     justify-content: center;
+  }
+
+  .note-action-btn .btn-label {
+    display: none;
+  }
+
+  .note-action-btn {
+    padding: 0.5rem !important;
+    min-width: 40px;
+    width: 40px;
+    height: 40px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .note-action-btn .svg-size {
+    width: 18px;
+    height: 18px;
   }
 }
 
@@ -3100,7 +3221,6 @@ button > svg {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--spacing-md);
   }
-
 
   .board-section h3 {
     font-size: 1.25rem;
@@ -3281,6 +3401,22 @@ button > svg {
   .page-back-button {
     width: 25%;
   }
+
+  .note-actions-left {
+    gap: 1.25rem;
+  }
+
+  .note-action-btn {
+    min-width: 36px;
+    width: 36px;
+    height: 36px;
+    padding: 0.4rem !important;
+  }
+
+  .note-action-btn .svg-size {
+    width: 16px;
+    height: 16px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -3359,7 +3495,6 @@ button > svg {
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: var(--spacing-md);
   }
-
 
   .board-section h3 {
     font-size: 1.1rem;
@@ -3479,19 +3614,18 @@ button > svg {
     width: 100%;
     display: flex;
     flex-direction: row;
-    /* justify-content: flex-end; */
     align-items: center;
     gap: var(--spacing-xs);
   }
 
   .note-actions-left {
     display: flex;
-    gap: var(--spacing-xs);
+    gap: var(--spacing-xl);
   }
 
   .note-actions .btn {
-    padding: var(--spacing-xs);
-    font-size: 0.8rem;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 0.9rem;
     flex: 0 0 auto;
   }
 
