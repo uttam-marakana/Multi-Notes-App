@@ -2992,12 +2992,12 @@ textarea::placeholder {
   gap: 0.5rem;
 }
 
-.board-actions-left,
+.board-actions-left, 
 .note-actions-left {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 2.5rem;
+  gap: 2rem;
   flex-wrap: nowrap;
   min-width: 0;
 }
