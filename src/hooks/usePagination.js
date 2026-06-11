@@ -1,47 +1,105 @@
-import { useMemo, useState, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-export function usePagination(items, { initialPageSize = 10 } = {}) {
-  const [pageSize, setPageSize] = useState(initialPageSize);
-  const [page, setPage] = useState(1);
+const clamp = (n, min, max) => Math.max(min, Math.min(n, max));
 
-  const totalItems = items?.length || 0;
-  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+function normalizeItemsPerPage(value) {
+  if (value === "all" || value == null) return null;
 
-  useEffect(() => {
-    // if filters/search reduce results, keep page in bounds
-    setPage((prevPage) => Math.min(prevPage, totalPages));
-  }, [totalPages]);
+  const num = Number(value);
 
-  const setPageSafe = (next) => {
-    setPage(() => {
-      const clamped = Math.max(1, Math.min(next, totalPages));
-      return clamped;
-    });
-  };
-
-  const pagedItems = useMemo(() => {
-    if (!items) return [];
-    const start = (page - 1) * pageSize;
-    return items.slice(start, start + pageSize);
-  }, [items, page, pageSize]);
-
-  const PaginationMeta = {
-    page,
-    pageSize,
-    totalItems,
-    totalPages,
-    startIndex: totalItems === 0 ? 0 : (page - 1) * pageSize + 1,
-    endIndex: Math.min(totalItems, page * pageSize),
-  };
-
-  return {
-    pagedItems,
-    PaginationMeta,
-    setPage: setPageSafe,
-    setPageSize: (size) => {
-      setPageSize(size);
-      setPage(1);
-    },
-  };
+  return Number.isFinite(num) && num > 0 ? num : null;
 }
 
+export function usePagination(
+  allItems = [],
+  { initialPage = 1, initialItemsPerPage = 6 } = {},
+) {
+  const [currentPage, setCurrentPageState] = useState(initialPage);
+
+  const [itemsPerPage, setItemsPerPageState] = useState(
+    normalizeItemsPerPage(initialItemsPerPage),
+  );
+
+  const totalItems = allItems.length;
+
+  const totalPages = useMemo(() => {
+    if (itemsPerPage == null) {
+      return totalItems > 0 ? 1 : 0;
+    }
+
+    return totalItems === 0 ? 0 : Math.ceil(totalItems / itemsPerPage);
+  }, [totalItems, itemsPerPage]);
+
+  // Keep current page within valid range
+  useEffect(() => {
+    if (totalPages === 0) {
+      setCurrentPageState(1);
+      return;
+    }
+
+    setCurrentPageState((prev) => clamp(prev, 1, totalPages));
+  }, [totalPages]);
+
+  const startIndex = useMemo(() => {
+    if (totalItems === 0) return 0;
+
+    if (itemsPerPage == null) return 0;
+
+    return (currentPage - 1) * itemsPerPage;
+  }, [currentPage, itemsPerPage, totalItems]);
+
+  const currentItems = useMemo(() => {
+    if (totalItems === 0) {
+      return [];
+    }
+
+    if (itemsPerPage == null) {
+      return allItems;
+    }
+
+    return allItems.slice(startIndex, startIndex + itemsPerPage);
+  }, [allItems, startIndex, itemsPerPage, totalItems]);
+
+  const displayStart = totalItems === 0 ? 0 : startIndex + 1;
+
+  const displayEnd =
+    totalItems === 0
+      ? 0
+      : itemsPerPage == null
+        ? totalItems
+        : Math.min(startIndex + itemsPerPage, totalItems);
+
+  const setCurrentPage = useCallback(
+    (page) => {
+      setCurrentPageState((prev) => {
+        const nextPage = typeof page === "function" ? page(prev) : page;
+
+        return clamp(Number(nextPage) || 1, 1, Math.max(totalPages, 1));
+      });
+    },
+    [totalPages],
+  );
+
+  const setItemsPerPage = useCallback((value) => {
+    setItemsPerPageState(normalizeItemsPerPage(value));
+
+    // Always return to first page
+    setCurrentPageState(1);
+  }, []);
+
+  return {
+    currentPage,
+    setCurrentPage,
+
+    itemsPerPage,
+    setItemsPerPage,
+
+    totalItems,
+    totalPages,
+
+    currentItems,
+
+    displayStart,
+    displayEnd,
+  };
+}
