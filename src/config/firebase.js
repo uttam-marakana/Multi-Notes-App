@@ -1,12 +1,12 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import {
-  getFirestore,
-  enableIndexedDbPersistence,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
 } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getAnalytics } from "firebase/analytics";
-
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -18,27 +18,27 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
+// Initialize Firebase App
 const app = initializeApp(firebaseConfig);
 
+// Firebase Authentication
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+
+// Firestore with offline persistence support
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager(),
+  }),
+});
+
+// Firebase Storage
 export const storage = getStorage(app);
 
-// Phase 14: Offline support (Firestore local persistence)
-// Works best in browsers with IndexedDB support.
-// Safe no-op if persistence can't be enabled.
-if (typeof window !== "undefined") {
-  enableIndexedDbPersistence(db).catch((err) => {
-    // Typical cases:
-    // - failed-precondition: persistence already enabled in another tab
-    // - unimplemented: browser doesn't support it
-    // - no storage: IndexedDB unavailable
-    console.warn("Firestore persistence not enabled:", err?.code || err);
-  });
-}
-
+// Firebase Analytics (browser only)
 export const analytics =
   typeof window !== "undefined" && firebaseConfig.measurementId
     ? getAnalytics(app)
     : null;
 
+// Export Firebase App instance if needed elsewhere
+export default app;
