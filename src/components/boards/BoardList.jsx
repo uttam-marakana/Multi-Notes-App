@@ -1,22 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useAuth } from "../../contexts/AuthContext";
 import BoardCard from "./BoardCard";
-import PINModal from "../PINModal";
+import PINModal from "../ui/PINModal";
 import { verifyPIN, grantProtectedAccess } from "../../utils/helpers";
-import Pagination from "../common/Pagination";
-import { usePagination } from "../../hooks/usePagination";
-
-
-
-
-
-
-
-
-const PAGE_SIZE_OPTIONS = [10, 15, 25];
-
-
+import { isBoardTrashed } from "../../utils/trashStorage";
 
 const BoardList = ({
   boards,
@@ -26,7 +14,6 @@ const BoardList = ({
   searchText,
   protectedOnly,
 }) => {
-
   const { colors } = useTheme();
   const { currentUser } = useAuth();
   const currentUserId = currentUser?.uid;
@@ -37,12 +24,8 @@ const BoardList = ({
 
   const normalizedQuery = (searchText || "").trim().toLowerCase();
 
-
-
-
   const filtered = useMemo(() => {
-
-    const list = Array.from(boards || []);
+    const list = Array.from(boards || []).filter((b) => !isBoardTrashed(b.id));
 
     const base = list.filter((b) => {
       if (protectedOnly && !b.isProtected) return false;
@@ -50,8 +33,37 @@ const BoardList = ({
 
       const name = String(b.name || "").toLowerCase();
       const description = String(b.description || "").toLowerCase();
+      const color = String(b.color || "").toLowerCase();
 
-      return name.includes(normalizedQuery) || description.includes(normalizedQuery);
+      // favorites is represented by pinnedBy
+      const isFav = Boolean(
+        currentUserId && b.pinnedBy?.includes(currentUserId),
+      );
+
+      // protected status: accept common tokens in the query
+      const q = normalizedQuery;
+      const matchesProtected =
+        q.includes("protected") || q.includes("secure") || q.includes("locked")
+          ? Boolean(b.isProtected)
+          : q.includes("unprotected") ||
+              q.includes("open") ||
+              q.includes("unlocked") ||
+              q.includes("ready")
+            ? !b.isProtected
+            : true;
+
+      // favorites token
+      const matchesFav =
+        q.includes("fav") || q.includes("favorite") || q.includes("pinned")
+          ? isFav
+          : true;
+
+      return (
+        name.includes(normalizedQuery) ||
+        description.includes(normalizedQuery) ||
+        color.includes(normalizedQuery) ||
+        (matchesFav && matchesProtected)
+      );
     });
 
     const pinned = base.filter((b) => b.pinnedBy?.includes(currentUserId));
@@ -67,31 +79,11 @@ const BoardList = ({
     return { pinned, sortedUnpinned };
   }, [boards, currentUserId, protectedOnly, normalizedQuery]);
 
-  const combinedForPagination = useMemo(() => {
-    return [...(filtered?.pinned || []), ...(filtered?.sortedUnpinned || [])];
-  }, [filtered]);
-
-  const { pagedItems, PaginationMeta, setPage, setPageSize } = usePagination(
-    combinedForPagination,
-    { initialPageSize: 10 },
-  );
-
-  useEffect(() => {
-    setPage(1);
-  }, [searchText, protectedOnly, setPage]);
-
-  const pagePinned = useMemo(() => {
-    const pinnedIds = new Set((filtered?.pinned || []).map((b) => b.id));
-    return pagedItems.filter((b) => pinnedIds.has(b.id));
-  }, [pagedItems, filtered]);
-
-  const pageUnpinned = useMemo(() => {
-    const pinnedIds = new Set((filtered?.pinned || []).map((b) => b.id));
-    return pagedItems.filter((b) => !pinnedIds.has(b.id));
-  }, [pagedItems, filtered]);
-
   const totalMatches =
     (filtered?.pinned?.length || 0) + (filtered?.sortedUnpinned?.length || 0);
+
+  const allPinned = filtered?.pinned || [];
+  const allUnpinned = filtered?.sortedUnpinned || [];
 
   const handleRequirePin = (board, action) => {
     setSelectedBoard(board);
@@ -147,11 +139,11 @@ const BoardList = ({
       ) : (
         <>
           <div className="board-list-container">
-            {pagePinned.length > 0 && (
+            {allPinned.length > 0 && (
               <div className="board-section">
                 <h3 style={{ color: colors.text }}>⭐ Pinned Boards</h3>
                 <div className="board-grid">
-                  {pagePinned.map((board) => (
+                  {allPinned.map((board) => (
                     <BoardCard
                       key={board.id}
                       board={board}
@@ -167,10 +159,10 @@ const BoardList = ({
 
             <div className="board-section">
               <h3 style={{ color: colors.text }}>
-                {pagePinned.length > 0 ? "All Boards" : "Your Boards"}
+                {allPinned.length > 0 ? "All Boards" : "Your Boards"}
               </h3>
               <div className="board-grid">
-                {pageUnpinned.map((board) => (
+                {allUnpinned.map((board) => (
                   <BoardCard
                     key={board.id}
                     board={board}
@@ -183,13 +175,6 @@ const BoardList = ({
               </div>
             </div>
           </div>
-
-          <Pagination
-            meta={PaginationMeta}
-            pageSizeOptions={PAGE_SIZE_OPTIONS}
-            onPageSizeChange={(size) => setPageSize(size)}
-            onPageChange={(next) => setPage(next)}
-          />
         </>
       )}
 
@@ -209,4 +194,3 @@ const BoardList = ({
 };
 
 export default BoardList;
-

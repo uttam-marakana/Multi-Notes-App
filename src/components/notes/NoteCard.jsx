@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { useBoard } from "../../contexts/BoardContext";
-import PINModal from "../PINModal";
-import ThreeDotsMenu from "../ThreeDotsMenu";
+import PINModal from "../ui/PINModal";
+import ThreeDotsMenu from "../ui/ThreeDotsMenu";
+import { useNavigate } from "react-router-dom";
+
 import {
   getPriorityColor,
   truncateText,
@@ -28,6 +30,7 @@ export default function NoteCard({
   const { colors, priorityColors } = useTheme();
   void noteColor;
   const { currentUser } = useAuth();
+  const navigate = useNavigate();
   const { boards } = useBoard();
   const [showPINModal, setShowPINModal] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
@@ -102,6 +105,18 @@ export default function NoteCard({
           borderColor: colors.border,
           borderLeftColor: note.color || priorityColor,
         }}
+        role="button"
+        tabIndex={0}
+        onClick={() => {
+          if (!currentUser) return;
+          navigate(`/notes/details/${note.id}?boardId=${encodeURIComponent(boardId || "")}`);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            if (!currentUser) return;
+            navigate(`/notes/details/${note.id}?boardId=${encodeURIComponent(boardId || "")}`);
+          }
+        }}
       >
         {note.isProtected && !isVerified && (
           <div
@@ -128,6 +143,7 @@ export default function NoteCard({
             Read Only
           </div>
         )}
+
 
         {isPinned && (
           <div
@@ -209,7 +225,7 @@ export default function NoteCard({
           <div className="note-actions-row">
             <div className="note-actions-left">
               <button
-                className="btn btn-ghost btn-sm"
+                className="btn btn-ghost btn-sm note-card-action-btn"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -223,7 +239,7 @@ export default function NoteCard({
               </button>
 
               <button
-                className="btn btn-ghost btn-sm"
+                className="btn btn-ghost btn-sm note-card-action-btn note-card-delete-btn"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -237,13 +253,13 @@ export default function NoteCard({
                 <span className="btn-label">Delete</span>
               </button>
 
-
               <ThreeDotsMenu
                 items={[
                   {
                     label: isPinned ? "Unfavourite" : "Favourite",
                     onClick: (e) => {
-                      if (e?.stopPropagation) e.stopPropagation();
+                      e?.preventDefault?.();
+                      e?.stopPropagation?.();
                       handlePin();
                     },
                     icon: (
@@ -256,7 +272,8 @@ export default function NoteCard({
                   {
                     label: "Clone",
                     onClick: (e) => {
-                      if (e?.stopPropagation) e.stopPropagation();
+                      e?.preventDefault?.();
+                      e?.stopPropagation?.();
                       handleClone();
                     },
                     icon: <span style={{ fontSize: "1.05rem" }}>⧉</span>,

@@ -1,11 +1,6 @@
 import { useEffect } from "react";
 
-export default function Drawer({
-  isOpen,
-  title,
-  onClose,
-  children,
-}) {
+export default function Drawer({ isOpen, title, onClose, children }) {
   useEffect(() => {
     if (!isOpen) return;
     const onKeyDown = (e) => {
@@ -18,32 +13,61 @@ export default function Drawer({
   return (
     <>
       <div
-        className={`fixed inset-0 z-[9999] transition-opacity duration-200 ${
+        className={`fixed inset-0 z-9999 transition-opacity duration-200 ${
           isOpen ? "opacity-100" : "pointer-events-none opacity-0"
-        } bg-black/30`}
+        } bg-black/50 backdrop-blur-sm`}
         onClick={onClose}
         aria-hidden={!isOpen}
       />
 
       <aside
-        className={`fixed left-0 top-0 z-[10000] h-full transform bg-white/0 backdrop-blur-xl transition-transform duration-300 ease-out will-change-transform ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
-        } w-[40vw] max-w-full md:w-[40vw] sm:w-[70vw] xs:w-[85vw]`}
+        className={`fixed inset-y-0 left-0 z-10000
+          transform transition-transform duration-300 ease-out
+          will-change-transform
+          ${isOpen ? "translate-x-0" : "-translate-x-full"}
+          w-full max-w-[90vw]
+          sm:max-w-105
+          md:max-w-105
+          lg:max-w-100
+          xl:max-w-105`}
         aria-hidden={!isOpen}
         style={{ touchAction: "pan-y" }}
       >
         <div
-          className="h-full w-full glass-card border-r-0 rounded-none overflow-y-auto"
+          className="
+            h-full
+            w-full
+            glass-card
+            rounded-r-2xl
+            overflow-y-auto
+            shadow-2xl
+            border-r
+          "
           style={{
-            backgroundColor: "rgba(255,255,255,0.06)",
+            backgroundColor: "var(--glass-bg)",
             borderColor: "var(--glass-border)",
+            padding: "var(--spacing-xl)"
           }}
         >
-
-          <div className="p-4 border-b border-[var(--glass-border)] flex items-center justify-between gap-2">
-            <h3 className="font-semibold text-[1.05rem]">{title}</h3>
+          <div
+            className="
+              p-6
+              border-b
+              border-(--glass-border)
+              flex
+              items-center
+              justify-between
+            "
+          >
+            <h3 className="text-2xl font-bold">{title}</h3>
             <button
-              className="btn btn-ghost btn-xs"
+              className="
+                w-10
+                h-10
+                rounded-full
+                hover:bg-black/10
+                transition
+              "
               onClick={onClose}
               type="button"
             >
@@ -51,10 +75,9 @@ export default function Drawer({
             </button>
           </div>
 
-          <div className="p-4">{children}</div>
+          <div className="p-6 space-y-6">{children}</div>
         </div>
       </aside>
     </>
   );
 }
-

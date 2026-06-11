@@ -1,89 +1,147 @@
 import React from "react";
 
+function buildPageLabel(token, page) {
+  if (token === "..." || token === "ellipsis") return "...";
+  if (typeof token === "number") return String(token);
+  return String(page);
+}
+
 export default function Pagination({
-  meta,
-  pageSizeOptions = [10, 15, 20],
-  onPageSizeChange,
+  totalItems,
+  totalPages,
+  currentPage,
+  displayStart,
+  displayEnd,
   onPageChange,
 }) {
-  if (!meta || meta.totalItems === 0) return null;
+  if (!totalItems || totalItems === 0 || !totalPages || totalPages <= 0) {
+    return null;
+  }
 
-  const { page, totalPages, pageSize } = meta;
+  const canPrev = Number(currentPage) > 1;
+  const canNext = Number(currentPage) < Number(totalPages);
 
+  const pageTokens = (() => {
+    if (totalPages <= 7) {
+      return Array.from(
+        { length: totalPages },
+        (_, i) => i + 1,
+      );
+    }
 
-  const canPrev = page > 1;
-  const canNext = page < totalPages;
+    const pages = new Set([
+      1,
+      totalPages,
+      currentPage,
+      currentPage - 1,
+      currentPage + 1,
+    ]);
 
-  const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
+    const sorted = Array.from(pages)
+      .filter(
+        (page) =>
+          page >= 1 && page <= totalPages,
+      )
+      .sort((a, b) => a - b);
 
+    const tokens = [];
+
+    for (let i = 0; i < sorted.length; i++) {
+      const page = sorted[i];
+
+      if (
+        i > 0 &&
+        page - sorted[i - 1] > 1
+      ) {
+        tokens.push("...");
+      }
+
+      tokens.push(page);
+    }
+
+    return tokens;
+  })();
 
   return (
     <div className="w-full border-t border-base-300 pt-4">
-      {/* Mobile-first layout: stack page info + controls */}
-      <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-baseline sm:justify-between">
-        {/* Left */}
+      <div className="flex gap-3 lg:flex-row lg:items-center lg:justify-between">
+        {/* Result Summary */}
         <div className="text-sm text-base-content/70 whitespace-nowrap">
-          Page <strong>{page}</strong> of <strong>{totalPages}</strong>
+          Showing {displayStart}–{displayEnd} of{" "}
+          {totalItems} notes
         </div>
 
-        {/* Right */}
-        <div className="flex flex-wrap items-center gap-2">
-          <label
-            htmlFor="pageSize"
-            className="text-sm text-base-content/70 whitespace-nowrap"
-            id="pagination-lable"
+        {/* Pagination Controls */}
+        <div className="flex flex-wrap items-center gap-1 sm:gap-2 lg:flex-nowrap">
+          <button
+            type="button"
+            disabled={!canPrev}
+            onClick={() =>
+              onPageChange?.(
+                Number(currentPage) - 1,
+              )
+            }
+            className="btn btn-ghost btn-sm"
           >
-            Per page
-          </label>
+            Previous
+          </button>
 
-          <select
-            id="pageSize"
-            value={pageSize}
-            onChange={(e) => onPageSizeChange?.(Number(e.target.value))}
-            className="select select-bordered select-sm w-20 min-w-[80px]"
-          >
-            {pageSizeOptions.map((size) => (
-              <option key={size} value={size}>
-                {size}
-              </option>
-            ))}
-          </select>
+          <div className="flex items-center gap-1">
+            {pageTokens.map((token, index) => {
+              if (token === "...") {
+                return (
+                  <span
+                    key={`ellipsis-${index}`}
+                    className="px-2 text-sm text-base-content/70"
+                  >
+                    ...
+                  </span>
+                );
+              }
 
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              disabled={!canPrev}
-              onClick={() => onPageChange?.(page - 1)}
-              className="btn btn-ghost btn-sm"
-            >
-              Previous
-            </button>
+              const page = token;
 
-            {/* Page numbers: allow horizontal scroll on very small screens */}
-            <div className="flex items-center gap-1 overflow-x-auto max-w-[100vw]">
-              {pageNumbers.map((p) => (
+              return (
                 <button
-                  key={p}
+                  key={page}
                   type="button"
-                  onClick={() => onPageChange?.(p)}
-                  className={`btn btn-sm min-w-[36px] ${
-                    page === p ? "btn-primary" : "btn-ghost"
+                  onClick={() =>
+                    onPageChange?.(page)
+                  }
+                  className={`btn btn-sm min-w-9 ${
+                    Number(page) ===
+                    Number(currentPage)
+                      ? "btn-primary"
+                      : "btn-ghost"
                   }`}
+                  aria-current={
+                    Number(page) ===
+                    Number(currentPage)
+                      ? "page"
+                      : undefined
+                  }
                 >
-                  {p}
+                  {buildPageLabel(
+                    token,
+                    page,
+                  )}
                 </button>
-              ))}
-            </div>
-
-            <button
-              type="button"
-              disabled={!canNext}
-              onClick={() => onPageChange?.(page + 1)}
-              className="btn btn-ghost btn-sm"
-            >
-              Next
-            </button>
+              );
+            })}
           </div>
+
+          <button
+            type="button"
+            disabled={!canNext}
+            onClick={() =>
+              onPageChange?.(
+                Number(currentPage) + 1,
+              )
+            }
+            className="btn btn-ghost btn-sm"
+          >
+            Next
+          </button>
         </div>
       </div>
     </div>

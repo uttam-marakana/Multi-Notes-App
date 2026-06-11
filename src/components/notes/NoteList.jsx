@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+
 import { useTheme } from "../../contexts/ThemeContext";
 import { useAuth } from "../../contexts/AuthContext";
 import NoteCard from "./NoteCard";
@@ -8,10 +9,11 @@ import Pagination from "../common/Pagination";
 import SearchWithSuggestions from "../common/SearchWithSuggestions";
 import { usePagination } from "../../hooks/usePagination";
 
-const PAGE_SIZE_OPTIONS = [10, 15, 25];
+import { isNoteTrashed } from "../../utils/trashStorage";
 
 const NoteList = ({ notes, boardId, onEdit, onDelete, onPin, onClone }) => {
   const { colors } = useTheme();
+
   const { currentUser } = useAuth();
   const currentUserId = currentUser?.uid;
 
@@ -24,10 +26,15 @@ const NoteList = ({ notes, boardId, onEdit, onDelete, onPin, onClone }) => {
   // Note: keep hooks order stable (no early returns before hooks)
   const safeNotes = useMemo(() => (Array.isArray(notes) ? notes : []), [notes]);
 
+  const visibleNotes = useMemo(
+    () => safeNotes.filter((n) => !isNoteTrashed(n.boardId, n.id)),
+    [safeNotes],
+  );
+
   const normalizedQuery = (searchText || "").trim().toLowerCase();
 
   const suggestions = useMemo(() => {
-    const list = safeNotes;
+    const list = visibleNotes;
 
     return list
       .map((n) => ({
@@ -35,10 +42,10 @@ const NoteList = ({ notes, boardId, onEdit, onDelete, onPin, onClone }) => {
         label: n.title || (n.content ? n.content.slice(0, 30) : "Untitled"),
       }))
       .slice(0, 200);
-  }, [safeNotes]);
+  }, [visibleNotes]);
 
   const filtered = useMemo(() => {
-    const list = Array.from(safeNotes || []);
+    const list = Array.from(visibleNotes || []);
 
     const base = list.filter((n) => {
       const matchesPriority =
@@ -49,8 +56,37 @@ const NoteList = ({ notes, boardId, onEdit, onDelete, onPin, onClone }) => {
       const title = String(n.title || "").toLowerCase();
       const content = String(n.content || "").toLowerCase();
 
+      // board name is not passed into NoteList; but NoteCard shows boardId only.
+      // We still support boardId textual match.
+      const boardIdStr = String(n.boardId || "").toLowerCase();
+      const q = normalizedQuery;
+
+      // favorites represented by pinnedBy
+      const isFav = Boolean(
+        currentUserId && n.pinnedBy?.includes(currentUserId),
+      );
+
+      // protected status: match common tokens, otherwise allow through
+      const matchesProtected =
+        q.includes("protected") || q.includes("secure") || q.includes("locked")
+          ? Boolean(n.isProtected)
+          : q.includes("unprotected") ||
+              q.includes("open") ||
+              q.includes("unlocked") ||
+              q.includes("ready")
+            ? !n.isProtected
+            : true;
+
+      const matchesFav =
+        q.includes("fav") || q.includes("favorite") || q.includes("pinned")
+          ? isFav
+          : true;
+
       return (
-        title.includes(normalizedQuery) || content.includes(normalizedQuery)
+        title.includes(q) ||
+        content.includes(q) ||
+        boardIdStr.includes(q) ||
+        (matchesFav && matchesProtected)
       );
     });
 
@@ -64,35 +100,48 @@ const NoteList = ({ notes, boardId, onEdit, onDelete, onPin, onClone }) => {
     );
 
     return { pinned, sortedUnpinned };
-  }, [safeNotes, currentUserId, priority, normalizedQuery]);
-
-  const combinedForPagination = useMemo(() => {
-    const pinned = filtered?.pinned || [];
-    const sortedUnpinned = filtered?.sortedUnpinned || [];
-    return [...pinned, ...sortedUnpinned];
-  }, [filtered]);
-
-  const { pagedItems, PaginationMeta, setPage, setPageSize } = usePagination(
-    combinedForPagination,
-    { initialPageSize: 10 },
-  );
-
-  useEffect(() => {
-    setPage(1);
-  }, [searchText, priority, setPage]);
-
-  const pagePinned = useMemo(() => {
-    const pinnedIds = new Set((filtered?.pinned || []).map((n) => n.id));
-    return pagedItems.filter((n) => pinnedIds.has(n.id));
-  }, [pagedItems, filtered]);
-
-  const pageUnpinned = useMemo(() => {
-    const pinnedIds = new Set((filtered?.pinned || []).map((n) => n.id));
-    return pagedItems.filter((n) => !pinnedIds.has(n.id));
-  }, [pagedItems, filtered]);
+  }, [visibleNotes, currentUserId, priority, normalizedQuery]);
 
   const totalMatches =
     (filtered?.pinned?.length || 0) + (filtered?.sortedUnpinned?.length || 0);
+
+  const allPinned = useMemo(() => filtered?.pinned || [], [filtered]);
+  const allUnpinned = useMemo(() => filtered?.sortedUnpinned || [], [filtered]);
+
+  // Sorting + filtering happen above; pagination applies after.
+  const combinedForPagination = useMemo(() => {
+    return [...allPinned, ...allUnpinned];
+  }, [allPinned, allUnpinned]);
+
+  const {
+    currentPage,
+    totalPages,
+    totalItems,
+    currentItems,
+    setItemsPerPage,
+    displayStart,
+    displayEnd,
+    setCurrentPage,
+    itemsPerPage,
+  } = usePagination(combinedForPagination, {
+    initialPage: 1,
+    initialItemsPerPage: 12,
+  });
+
+  const paginatedPinned = useMemo(
+    () => currentItems.filter((n) => n.pinnedBy?.includes(currentUserId)),
+    [currentItems, currentUserId],
+  );
+
+  const paginatedUnpinned = useMemo(
+    () => currentItems.filter((n) => !n.pinnedBy?.includes(currentUserId)),
+    [currentItems, currentUserId],
+  );
+
+  // Reset page whenever search/filter inputs change.
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchText, priority]);
 
   return (
     <div className="note-list-container">
@@ -146,6 +195,25 @@ const NoteList = ({ notes, boardId, onEdit, onDelete, onPin, onClone }) => {
             </select>
           </div>
 
+          <div className="flex flex-col gap-2">
+            <label className="text-sm text-muted">Notes Per Page</label>
+
+            <select
+              className="mt-1"
+              value={itemsPerPage ?? "all"}
+              onChange={(e) =>
+                setItemsPerPage(
+                  e.target.value === "all" ? null : Number(e.target.value),
+                )
+              }
+            >
+              <option value={6}>6</option>
+              <option value={12}>12</option>
+              <option value={24}>24</option>
+              <option value="all">All</option>
+            </select>
+          </div>
+
           <div className="flex items-center justify-between gap-3">
             <button
               type="button"
@@ -184,54 +252,61 @@ const NoteList = ({ notes, boardId, onEdit, onDelete, onPin, onClone }) => {
         </div>
       ) : (
         <>
-          {pagePinned.length > 0 && (
-            <div className="note-section">
-              <h3 style={{ color: colors.text }}>⭐ Pinned Notes</h3>
-              <div className="note-grid">
-                {pagePinned.map((note) => (
-                  <NoteCard
-                    key={note.id}
-                    note={note}
-                    boardId={boardId}
-                    onEdit={() => onEdit?.(note.id)}
-                    onDelete={() => onDelete?.(note.id)}
-                    onPin={() => onPin?.(note.id)}
-                    onClone={() => onClone?.(note.id)}
-                  />
-                ))}
+          {/* Render ONLY current page notes */}
+          {currentItems.length > 0 && (
+            <>
+              {paginatedPinned.length > 0 && (
+                <div className="note-section">
+                  <h3 style={{ color: colors.text }}>⭐ Pinned Notes</h3>
+                  <div className="note-grid">
+                    {paginatedPinned.map((note) => (
+                      <NoteCard
+                        key={`${note.id}-${currentPage}`}
+                        note={note}
+                        boardId={boardId}
+                        onEdit={() => onEdit?.(note.id)}
+                        onDelete={() => onDelete?.(note.id)}
+                        onPin={() => onPin?.(note.id)}
+                        onClone={() => onClone?.(note.id)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="note-section">
+                <h3 style={{ color: colors.text }}>
+                  {allPinned.length > 0 ? "All Notes" : "Your Notes"}
+                </h3>
+                <div className="note-grid">
+                  {paginatedUnpinned.map((note) => (
+                    <NoteCard
+                      key={`${note.id}-${currentPage}`}
+                      note={note}
+                      boardId={boardId}
+                      onEdit={() => onEdit?.(note.id)}
+                      onDelete={() => onDelete?.(note.id)}
+                      onPin={() => onPin?.(note.id)}
+                      onClone={() => onClone?.(note.id)}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
+            </>
           )}
 
-          <div className="note-section">
-            <h3 style={{ color: colors.text }}>
-              {pagePinned.length > 0 ? "All Notes" : "Your Notes"}
-            </h3>
-            <div className="note-grid">
-              {pageUnpinned.map((note) => (
-                <NoteCard
-                  key={note.id}
-                  note={note}
-                  boardId={boardId}
-                  onEdit={() => onEdit?.(note.id)}
-                  onDelete={() => onDelete?.(note.id)}
-                  onPin={() => onPin?.(note.id)}
-                  onClone={() => onClone?.(note.id)}
-                />
-              ))}
-            </div>
-          </div>
-
           <Pagination
-            meta={PaginationMeta}
-            pageSizeOptions={PAGE_SIZE_OPTIONS}
-            onPageSizeChange={(size) => setPageSize(size)}
-            onPageChange={(next) => setPage(next)}
+            totalItems={totalItems}
+            totalPages={totalPages}
+            currentPage={currentPage}
+            displayStart={displayStart}
+            displayEnd={displayEnd}
+            onPageChange={setCurrentPage}
           />
         </>
       )}
     </div>
-  );  
+  );
 };
 
 export default NoteList;

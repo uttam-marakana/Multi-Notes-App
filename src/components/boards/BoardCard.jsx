@@ -10,7 +10,8 @@ import {
 } from "../../utils/helpers";
 import { GoStar, GoStarFill } from "react-icons/go";
 import { RiFileCopyLine, RiDeleteBin6Line, RiEdit2Line } from "react-icons/ri";
-import ThreeDotsMenu from "../ThreeDotsMenu";
+import ThreeDotsMenu from "../ui/ThreeDotsMenu";
+
 
 
 
@@ -195,7 +196,7 @@ export default function BoardCard({
         <div className="board-actions-row">
           <div className="board-actions-left">
             <button
-              className="btn btn-ghost btn-sm"
+              className="btn btn-ghost btn-sm note-card-action-btn"
               onClick={(e) => {
                 stopClick(e);
                 handleEdit();
@@ -208,7 +209,7 @@ export default function BoardCard({
 
 
             <button
-              className="btn btn-ghost btn-sm"
+              className="btn btn-ghost btn-sm note-card-action-btn note-card-delete-btn"
               onClick={(e) => {
                 stopClick(e);
                 handleDelete();
@@ -254,7 +255,10 @@ export default function BoardCard({
 
           <button
             className="btn btn-primary btn-sm btn-with-text board-actions-view"
-            onClick={handleViewNotes}
+            onClick={(e) => {
+              stopClick(e);
+              handleViewNotes();
+            }}
             title="View Notes"
           >
             <span className="svg-size" aria-hidden>
