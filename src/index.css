@@ -1602,7 +1602,7 @@ textarea::placeholder {
 .board-actions .btn {
   flex: 0 0 auto;
   /* min-width: 60px; */
-  padding: var(--spacing-xs) var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-sm);
   font-size: 0.75rem;
 }
 
