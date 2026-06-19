@@ -3208,7 +3208,7 @@ textarea::placeholder {
 
   .board-actions .btn {
     font-size: 0.7rem;
-    padding: var(--spacing-xs) var(--spacing-xs);
+    padding: var(--spacing-md) var(--spacing-md);
   }
 
   .protected-badge,
@@ -3373,7 +3373,7 @@ textarea::placeholder {
 
   button,
   .btn {
-    width: 100%;
+    /* width: 100%; */
     padding: var(--spacing-md);
   }
 
