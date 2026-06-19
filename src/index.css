@@ -3490,6 +3490,11 @@ textarea::placeholder {
     min-width: unset;
   }
 
+  .board-actions-left, 
+  .note-actions-left {
+    justify-content: flex-start;
+  }
+
   .board-grid {
     /* mobile: allow 1-2 cards per row depending on viewport */
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
