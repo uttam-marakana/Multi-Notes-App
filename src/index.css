@@ -2616,6 +2616,11 @@ textarea::placeholder {
     gap: 0.5rem;
   }
 
+  .board-actions-left, 
+  .note-actions-left {
+    justify-content: flex-start;
+  }
+
   .note-card-action-btn {
     width: 36px !important;
     min-width: 36px;
