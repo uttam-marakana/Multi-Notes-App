@@ -2618,7 +2618,7 @@ textarea::placeholder {
 
   .board-actions-left, 
   .note-actions-left {
-    justify-content: flex-start;
+    justify-content: flex-start !important;
   }
 
   .note-card-action-btn {
@@ -3497,7 +3497,7 @@ textarea::placeholder {
 
   .board-actions-left, 
   .note-actions-left {
-    justify-content: flex-start;
+    justify-content: flex-start !important;
   }
 
   .board-grid {
