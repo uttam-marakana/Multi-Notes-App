@@ -3373,7 +3373,7 @@ textarea::placeholder {
 
   button,
   .btn {
-    /* width: 100%; */
+    width: auto;
     padding: var(--spacing-md);
   }
 
