@@ -51,7 +51,6 @@ export function AuthProvider({ children }) {
   const clearProtectedSession = useCallback(() => {
     if (typeof window !== "undefined") {
       sessionStorage.removeItem("noteflow-protected-access");
-      console.log("Protected access session cleared");
     }
   }, []);
 
@@ -59,7 +58,6 @@ export function AuthProvider({ children }) {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
       clearProtectedSession();
-      console.log("Idle timeout: Protected access revoked");
     }, 300000); // 5 minutes
   }, [clearProtectedSession]);
 
@@ -68,9 +66,11 @@ export function AuthProvider({ children }) {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       try {
         if (user) {
+          clearProtectedSession();
           const profile = await buildUserProfile(user);
           setCurrentUser(profile);
         } else {
+          clearProtectedSession();
           setCurrentUser(null);
         }
       } catch (error) {
@@ -81,7 +81,7 @@ export function AuthProvider({ children }) {
     });
 
     return unsubscribe;
-  }, [buildUserProfile]);
+  }, [buildUserProfile, clearProtectedSession]);
 
   // ✅ IDLE TIMEOUT LOGIC
   useEffect(() => {
@@ -134,8 +134,6 @@ export function AuthProvider({ children }) {
         email: user.email,
         ...userDetails,
       });
-
-      console.log("User registered + stored in Firestore");
 
       return userCredential; // ✅ IMPORTANT (fixes your bug)
     } catch (error) {

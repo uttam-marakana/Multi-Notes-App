@@ -12,6 +12,7 @@ import {
   where,
   orderBy,
   getDoc,
+  writeBatch,
 } from "firebase/firestore";
 
 import {
@@ -19,6 +20,8 @@ import {
   uploadBytesResumable,
   getDownloadURL,
   deleteObject,
+  getBytes,
+  uploadBytes,
 } from "firebase/storage";
 
 import { useAuth } from "./AuthContext";
@@ -43,7 +46,7 @@ export function NoteProvider({ children }) {
       const uploadedFiles = await Promise.all(
         fileArray.map(async (file) => {
           const safeName = file.name.replace(/\s+/g, "_");
-          const filePath = `${currentUser.uid}/boards/${boardId}/notes/${Date.now()}_${safeName}`;
+          const filePath = `${currentUser.uid}/boards/${boardId}/notes/${Date.now()}_${crypto.randomUUID()}_${safeName}`;
           const fileRef = storageRef(storage, filePath);
 
           const snapshot = await uploadBytesResumable(fileRef, file);
@@ -137,9 +140,9 @@ export function NoteProvider({ children }) {
       pin: noteData.pinHash
         ? noteData.pinHash
         : noteData.pin
-          ? hashPIN(noteData.pin)
+          ? await hashPIN(noteData.pin)
           : null,
-      contentType: noteData.contentType || ["text"],
+      contentType: noteData.contentType || ["html"],
       files: uploadedFiles,
 
       // ✅ FIXED ORDER (only change)
@@ -175,15 +178,24 @@ export function NoteProvider({ children }) {
     revokeProtectedAccess("note", noteId);
   };
 
-  const updateNote = async (boardId, noteId, updates) => {
+  const updateNote = async (boardId, noteId, updates = {}) => {
     if (!boardId || !noteId || !currentUser)
       throw new Error("Invalid parameters");
-
-    const note = notes.find((n) => n.id === noteId);
-    if (!note || note.boardId !== boardId || note.ownerId !== currentUser.uid)
-      throw new Error("Note not found or access denied");
+    if (typeof updates !== "object" || updates === null) {
+      throw new Error("Invalid note update");
+    }
 
     const noteRef = doc(db, "notes", noteId);
+    const noteSnapshot = await getDoc(noteRef);
+
+    if (!noteSnapshot.exists()) {
+      throw new Error("Note not found");
+    }
+
+    const note = noteSnapshot.data();
+    if (note.ownerId !== currentUser.uid || note.boardId !== boardId) {
+      throw new Error("Note not found or access denied");
+    }
 
     let mergedFiles = note.files || [];
 
@@ -206,26 +218,39 @@ export function NoteProvider({ children }) {
       mergedFiles = updates.files;
     }
 
-    const updateData = {
-      ...updates,
-      files: mergedFiles,
-      updatedAt: new Date().toISOString(),
-    };
+    const allowedFields = [
+      "title",
+      "content",
+      "priority",
+      "pinnedBy",
+      "isProtected",
+      "pin",
+      "contentType",
+      "files",
+      "order",
+    ];
 
-    delete updateData.newFiles;
-    delete updateData.removeFiles;
+    const updateData = Object.fromEntries(
+      Object.entries(updates).filter(([key]) => allowedFields.includes(key)),
+    );
 
-    if (updates.pin && typeof updates.pin === "string") {
-      updateData.pin = hashPIN(updates.pin);
+    updateData.files = mergedFiles;
+
+    if (Object.prototype.hasOwnProperty.call(updates, "pin")) {
+      updateData.pin =
+        typeof updates.pin === "string" && updates.pin
+          ? await hashPIN(updates.pin)
+          : updates.pin || null;
     }
 
     if (updates.isProtected === false) {
       updateData.pin = null;
     }
 
+    updateData.updatedAt = new Date().toISOString();
+
     await updateDoc(noteRef, updateData);
   };
-
   const toggleNotePin = async (boardId, noteId) => {
     const note = notes.find((n) => n.id === noteId);
     if (!note) return;
@@ -241,20 +266,42 @@ export function NoteProvider({ children }) {
   };
 
   const updateNoteOrder = async (boardId, newOrder) => {
-    if (!boardId || !currentUser) return;
+    if (!boardId || !currentUser || !Array.isArray(newOrder)) return;
 
-    const updatePromises = newOrder.map(async (noteId, index) => {
-      const noteRef = doc(db, "notes", noteId);
+    const uniqueNoteIds = [...new Set(newOrder)].filter(Boolean);
+    if (!uniqueNoteIds.length) return;
 
-      return updateDoc(noteRef, {
-        // ✅ collision-safe incremental order
-        order: Date.now() + index,
+    const noteRefs = uniqueNoteIds.map((noteId) => doc(db, "notes", noteId));
+    const snapshots = await Promise.all(noteRefs.map((ref) => getDoc(ref)));
+
+    const unauthorized = snapshots.some(
+      (snapshot) =>
+        !snapshot.exists() ||
+        snapshot.data().ownerId !== currentUser.uid ||
+        snapshot.data().boardId !== boardId,
+    );
+
+    if (unauthorized) {
+      throw new Error("One or more notes are not accessible in this board");
+    }
+
+    const baseOrder = Date.now();
+    const chunkSize = 450;
+
+    for (let start = 0; start < uniqueNoteIds.length; start += chunkSize) {
+      const batch = writeBatch(db);
+      const chunk = uniqueNoteIds.slice(start, start + chunkSize);
+
+      chunk.forEach((noteId, offset) => {
+        batch.update(doc(db, "notes", noteId), {
+          order: baseOrder + start + offset,
+          updatedAt: new Date().toISOString(),
+        });
       });
-    });
 
-    await Promise.all(updatePromises);
+      await batch.commit();
+    }
   };
-
   const getPinnedNotes = () =>
     notes.filter((n) => n.pinnedBy?.includes(currentUser.uid));
 
@@ -275,33 +322,56 @@ export function NoteProvider({ children }) {
       throw new Error("Note not found or access denied");
     }
 
-    // clone note doc
-    const newNote = {
-      boardId,
-      ownerId: currentUser.uid,
-      title: `${noteData.title || "Untitled Note"}`,
-      content: noteData.content || "",
-      priority: noteData.priority || "low",
-      pinnedBy: [],
-      isProtected: noteData.isProtected || false,
-      pin: noteData.pin ? noteData.pin : null,
-      contentType: noteData.contentType || ["text"],
+    const clonedFiles = [];
 
-      // keep current files metadata; if your app expects storage objects to exist,
-      // you can duplicate storage files. Here we do not duplicate storage objects,
-      // we just reference the same URLs/paths (same as a lightweight clone).
-      files: noteData.files || [],
+    try {
+      for (const file of noteData.files || []) {
+        if (!file?.path) {
+          clonedFiles.push(file);
+          continue;
+        }
 
-      order: Date.now(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+        const sourceRef = storageRef(storage, file.path);
+        const bytes = await getBytes(sourceRef);
+        const safeName = (file.name || "attachment").replace(/\s+/g, "_");
+        const destinationPath = `${currentUser.uid}/boards/${boardId}/notes/${Date.now()}_${crypto.randomUUID()}_${safeName}`;
+        const destinationRef = storageRef(storage, destinationPath);
+        const metadata = file.type ? { contentType: file.type } : undefined;
 
-    const notesRef = collection(db, "notes");
-    const docRef = await addDoc(notesRef, newNote);
-    return docRef.id;
+        await uploadBytes(destinationRef, bytes, metadata);
+        const url = await getDownloadURL(destinationRef);
+
+        clonedFiles.push({
+          ...file,
+          url,
+          path: destinationPath,
+          uploadedAt: new Date().toISOString(),
+        });
+      }
+
+      const newNote = {
+        boardId,
+        ownerId: currentUser.uid,
+        title: `${noteData.title || "Untitled Note"} (Copy)`,
+        content: noteData.content || "",
+        priority: noteData.priority || "low",
+        pinnedBy: [],
+        isProtected: noteData.isProtected || false,
+        pin: noteData.pin ? noteData.pin : null,
+        contentType: noteData.contentType || ["html"],
+        files: clonedFiles,
+        order: Date.now(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      const docRef = await addDoc(collection(db, "notes"), newNote);
+      return docRef.id;
+    } catch (error) {
+      await deleteStoredFiles(clonedFiles);
+      throw error;
+    }
   };
-
   const getNoteCount = () => notes.length;
 
   return (

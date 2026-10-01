@@ -12,13 +12,17 @@ service cloud.firestore {
     // Boards
     match /boards/{boardId} {
       allow read: if request.auth != null
-        && (resource.data.userId == request.auth.uid || resource.data.ownerId == request.auth.uid);
+        && resource.data.userId == request.auth.uid;
 
       allow create: if request.auth != null
         && request.resource.data.userId == request.auth.uid;
 
+      // Ownership and identity fields are immutable after creation.
       allow update: if request.auth != null
-        && resource.data.userId == request.auth.uid;
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.ownerId == resource.data.ownerId
+        && request.resource.data.pinnedBy.hasOnly([request.auth.uid]);
 
       allow delete: if request.auth != null
         && resource.data.userId == request.auth.uid;
@@ -27,26 +31,27 @@ service cloud.firestore {
     // Notes
     match /notes/{noteId} {
       allow read: if request.auth != null
-        && (resource.data.userId == request.auth.uid || resource.data.ownerId == request.auth.uid);
+        && resource.data.ownerId == request.auth.uid;
 
       allow create: if request.auth != null
-        && request.resource.data.userId == request.auth.uid;
+        && request.resource.data.ownerId == request.auth.uid;
 
+      // Note ownership and board relationship are immutable through normal edits.
       allow update: if request.auth != null
-        && resource.data.userId == request.auth.uid;
+        && resource.data.ownerId == request.auth.uid
+        && request.resource.data.ownerId == resource.data.ownerId
+        && request.resource.data.boardId == resource.data.boardId
+        && request.resource.data.pinnedBy.hasOnly([request.auth.uid]);
 
       allow delete: if request.auth != null
-        && resource.data.userId == request.auth.uid;
+        && resource.data.ownerId == request.auth.uid;
     }
 
     // Favorites are implemented in the app as `pinnedBy` arrays on the
     // boards/notes documents themselves (no separate `favorites` collection).
-    // Keeping this section deny-all prevents accidental access to a
-    // non-existent schema.
     match /favorites/{favoriteId} {
       allow read, write: if false;
     }
-
 
     // Default deny
     match /{document=**} {
@@ -54,4 +59,3 @@ service cloud.firestore {
     }
   }
 }
-

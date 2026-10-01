@@ -13,7 +13,13 @@ import {
   orderBy,
   serverTimestamp,
 } from "firebase/firestore";
-import { ref as storageRef, deleteObject } from "firebase/storage";
+import {
+  ref as storageRef,
+  deleteObject,
+  getBytes,
+  getDownloadURL,
+  uploadBytes,
+} from "firebase/storage";
 import { useAuth } from "./AuthContext";
 import { hashPIN, revokeProtectedAccess } from "../utils/helpers";
 
@@ -21,6 +27,42 @@ const BoardContext = createContext();
 
 export function useBoard() {
   return useContext(BoardContext);
+}
+
+async function cloneNoteFiles(files, userId, boardId) {
+  return Promise.all(
+    (files || []).map(async (file) => {
+      if (!file?.path) return file;
+
+      const sourceRef = storageRef(storage, file.path);
+      const bytes = await getBytes(sourceRef);
+      const safeName = (file.name || "attachment").replace(/\s+/g, "_");
+      const destinationPath = `${userId}/boards/${boardId}/notes/${Date.now()}_${crypto.randomUUID()}_${safeName}`;
+      const destinationRef = storageRef(storage, destinationPath);
+
+      const metadata = file.type ? { contentType: file.type } : undefined;
+      await uploadBytes(destinationRef, bytes, metadata);
+      const url = await getDownloadURL(destinationRef);
+
+      return {
+        ...file,
+        url,
+        path: destinationPath,
+        uploadedAt: new Date().toISOString(),
+      };
+    }),
+  );
+}
+
+
+async function deleteClonedFiles(files = []) {
+  await Promise.all(
+    files
+      .filter((file) => file?.path)
+      .map((file) =>
+        deleteObject(storageRef(storage, file.path)).catch(() => null),
+      ),
+  );
 }
 
 export function BoardProvider({ children }) {
@@ -95,7 +137,7 @@ export function BoardProvider({ children }) {
       description: boardData.description || "",
       pinnedBy: [],
       isProtected: boardData.isProtected || false,
-      pin: boardData.pin ? hashPIN(boardData.pin) : null,
+      pin: boardData.pin ? await hashPIN(boardData.pin) : null,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
@@ -137,25 +179,39 @@ export function BoardProvider({ children }) {
 
   /* ------ ✏️ UPDATE BOARD
      =========================== */
-  const updateBoard = async (id, updates) => {
+  const updateBoard = async (id, updates = {}) => {
     if (!currentUser) throw new Error("User not authenticated");
+    if (!id || typeof updates !== "object" || updates === null) {
+      throw new Error("Invalid board update");
+    }
 
-    const boardRef = doc(db, "boards", id);
+    const allowedFields = [
+      "name",
+      "color",
+      "description",
+      "pinnedBy",
+      "isProtected",
+      "pin",
+    ];
 
-    const updateData = {
-      ...updates,
-      updatedAt: serverTimestamp(),
-    };
+    const updateData = Object.fromEntries(
+      Object.entries(updates).filter(([key]) => allowedFields.includes(key)),
+    );
 
-    if (updates.pin && typeof updates.pin === "string") {
-      updateData.pin = hashPIN(updates.pin);
+    if (Object.prototype.hasOwnProperty.call(updates, "pin")) {
+      updateData.pin =
+        typeof updates.pin === "string" && updates.pin
+          ? await hashPIN(updates.pin)
+          : updates.pin || null;
     }
 
     if (updates.isProtected === false) {
       updateData.pin = null;
     }
 
-    await updateDoc(boardRef, updateData);
+    updateData.updatedAt = serverTimestamp();
+
+    await updateDoc(doc(db, "boards", id), updateData);
   };
 
   const updateBoardName = async (id, newName) => {
@@ -209,7 +265,7 @@ export function BoardProvider({ children }) {
       ownerId: currentUser.uid,
       color: source.color || "#3B82F6",
       description: source.description || "",
-      pinnedBy: Array.isArray(source.pinnedBy) ? source.pinnedBy : [],
+      pinnedBy: [],
       isProtected: Boolean(source.isProtected),
       pin: source.isProtected ? source.pin || null : null,
       createdAt: serverTimestamp(),
@@ -219,7 +275,6 @@ export function BoardProvider({ children }) {
     const newBoardRef = await addDoc(collection(db, "boards"), newBoard);
     const newBoardId = newBoardRef.id;
 
-    // ✅ Duplicate notes metadata (not storage objects)
     const notesSnap = await getDocs(
       query(
         collection(db, "notes"),
@@ -228,24 +283,45 @@ export function BoardProvider({ children }) {
       ),
     );
 
-    const noteCreates = notesSnap.docs.map((noteDoc) => {
-      const d = noteDoc.data();
+    const createdNoteRefs = [];
+    const createdFiles = [];
 
-      // ✅ Re-create note documents for the duplicated board.
-      // Files are stored under Storage path and are referenced by URLs/paths,
-      // so we intentionally keep them as-is (no re-upload).
-      return addDoc(collection(db, "notes"), {
-        ...d,
-        boardId: newBoardId,
-        ownerId: currentUser.uid,
-        pinnedBy: Array.isArray(d.pinnedBy) ? d.pinnedBy : [],
-        // new timestamps for the duplicated entities
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
-    });
+    try {
+      await Promise.all(
+        notesSnap.docs.map(async (noteDoc) => {
+          const d = noteDoc.data();
+          const clonedFiles = await cloneNoteFiles(
+            d.files || [],
+            currentUser.uid,
+            newBoardId,
+          );
+          createdFiles.push(...clonedFiles);
 
-    await Promise.all(noteCreates);
+          const noteRef = await addDoc(collection(db, "notes"), {
+            boardId: newBoardId,
+            ownerId: currentUser.uid,
+            title: d.title || "Untitled Note",
+            content: d.content || "",
+            priority: d.priority || "low",
+            pinnedBy: [],
+            isProtected: Boolean(d.isProtected),
+            pin: d.isProtected ? d.pin || null : null,
+            contentType: d.contentType || ["text"],
+            files: clonedFiles,
+            order: typeof d.order === "number" ? d.order : Date.now(),
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          });
+
+          createdNoteRefs.push(noteRef);
+        }),
+      );
+    } catch (error) {
+      await Promise.allSettled(createdNoteRefs.map((noteRef) => deleteDoc(noteRef)));
+      await deleteClonedFiles(createdFiles);
+      await deleteDoc(newBoardRef).catch(() => null);
+      throw error;
+    }
 
 
     return newBoardId;

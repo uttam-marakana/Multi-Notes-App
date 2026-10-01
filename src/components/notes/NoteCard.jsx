@@ -1,14 +1,18 @@
 import { useEffect, useState } from "react";
+
 import { useTheme } from "../../contexts/ThemeContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { useBoard } from "../../contexts/BoardContext";
+
 import PINModal from "../ui/PINModal";
 import ThreeDotsMenu from "../ui/ThreeDotsMenu";
+
 import { useNavigate } from "react-router-dom";
 
 import {
   getPriorityColor,
   truncateText,
+  richTextToPlainText,
   formatDate,
   getFileIcon,
   formatFileSize,
@@ -16,6 +20,7 @@ import {
   grantProtectedAccess,
   hasProtectedAccess,
 } from "../../utils/helpers";
+
 import { RiDeleteBin6Line, RiEdit2Line } from "react-icons/ri";
 
 export default function NoteCard({
@@ -28,25 +33,29 @@ export default function NoteCard({
   isDragging = false,
 }) {
   const { colors, priorityColors } = useTheme();
-  void noteColor;
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   const { boards } = useBoard();
+
   const [showPINModal, setShowPINModal] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
+
   const [isVerified, setIsVerified] = useState(
     !note.isProtected || hasProtectedAccess("note", note.id),
   );
 
   const currentUserId = currentUser?.uid;
+
   const board = boards.find((item) => item.id === boardId);
   const boardPinHash = board?.isProtected ? board.pin : null;
+
   const isOwner = !note.ownerId || note.ownerId === currentUserId;
+
   const isPinned = Boolean(
     currentUserId && note.pinnedBy?.includes(currentUserId),
   );
+
   const priorityColor = getPriorityColor(note.priority, priorityColors);
-  const noteColor = note.color;
 
   useEffect(() => {
     setIsVerified(!note.isProtected || hasProtectedAccess("note", note.id));
@@ -83,16 +92,19 @@ export default function NoteCard({
   };
 
   const handlePINSubmit = async (pin) => {
-    if (!verifyProtectedPIN(pin, note.pin, boardPinHash)) {
+    if (!(await verifyProtectedPIN(pin, note.pin, boardPinHash))) {
       throw new Error("Invalid PIN");
     }
 
     grantProtectedAccess("note", note.id);
+
     setIsVerified(true);
     setShowPINModal(false);
 
     const nextAction = pendingAction;
+
     setPendingAction(null);
+
     nextAction?.();
   };
 
@@ -109,12 +121,22 @@ export default function NoteCard({
         tabIndex={0}
         onClick={() => {
           if (!currentUser) return;
-          navigate(`/notes/details/${note.id}?boardId=${encodeURIComponent(boardId || "")}`);
+
+          navigate(
+            `/notes/details/${note.id}?boardId=${encodeURIComponent(
+              boardId || "",
+            )}`,
+          );
         }}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             if (!currentUser) return;
-            navigate(`/notes/details/${note.id}?boardId=${encodeURIComponent(boardId || "")}`);
+
+            navigate(
+              `/notes/details/${note.id}?boardId=${encodeURIComponent(
+                boardId || "",
+              )}`,
+            );
           }
         }}
       >
@@ -144,7 +166,6 @@ export default function NoteCard({
           </div>
         )}
 
-
         {isPinned && (
           <div
             className="pinned-badge"
@@ -165,7 +186,8 @@ export default function NoteCard({
         </h4>
 
         <p className="note-preview" style={{ color: colors.textMuted }}>
-          {truncateText(note.content, 90) || "No content yet."}
+          {truncateText(richTextToPlainText(note.content), 90) ||
+            "No content yet."}
         </p>
 
         {note.files?.length > 0 && (
@@ -188,20 +210,25 @@ export default function NoteCard({
                     src={file.url}
                     alt={file.name}
                     className="note-file-thumb"
+                    loading="lazy"
+                    decoding="async"
                   />
                 ) : (
                   <span className="note-file-icon">
                     {getFileIcon(file.type)}
                   </span>
                 )}
+
                 <span className="note-file-name">
                   {truncateText(file.name, 16)}
                 </span>
+
                 <small className="note-file-size">
                   {formatFileSize(file.size)}
                 </small>
               </a>
             ))}
+
             {note.files.length > 3 && (
               <span className="note-file-more">
                 +{note.files.length - 3} more
@@ -212,10 +239,14 @@ export default function NoteCard({
 
         <div
           className="note-meta"
-          style={{ color: colors.textMuted, borderTopColor: colors.border }}
+          style={{
+            color: colors.textMuted,
+            borderTopColor: colors.border,
+          }}
         >
           <small>{formatDate(note.createdAt) || "recently updated"}</small>
           <small>{note.priority || "low"} priority</small>
+
           {note.files?.length > 0 && (
             <small>{note.files.length} attachment(s)</small>
           )}
@@ -285,7 +316,6 @@ export default function NoteCard({
             </div>
           </div>
         </div>
-
       </article>
 
       <PINModal

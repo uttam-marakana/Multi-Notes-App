@@ -92,7 +92,7 @@ const BoardList = ({
   };
 
   const handlePINSubmit = async (pin) => {
-    if (!selectedBoard || !verifyPIN(pin, selectedBoard.pin)) {
+    if (!selectedBoard || !(await verifyPIN(pin, selectedBoard.pin))) {
       throw new Error("Invalid PIN");
     }
 

@@ -114,7 +114,7 @@ export default function BoardEdit() {
   };
 
   const handlePINSubmit = async (enteredPIN) => {
-    if (!board || !verifyPIN(enteredPIN, board.pin)) {
+    if (!board || !(await verifyPIN(enteredPIN, board.pin))) {
       throw new Error("Invalid PIN");
     }
 

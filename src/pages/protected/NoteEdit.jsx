@@ -21,6 +21,7 @@ import {
 } from "../../utils/helpers";
 import ColorPicker from "../../components/ui/ColorPicker";
 import { HiLockClosed, HiLockOpen } from "react-icons/hi2";
+import RichTextEditor from "../../components/ui/RichTextEditor";
 
 export default function NoteEdit() {
   const { id: noteId } = useParams();
@@ -177,6 +178,7 @@ export default function NoteEdit() {
         newFiles,
         removeFiles: removedFiles,
         files: existingFiles,
+        contentType: ["html"],
       });
 
       toast.success("Note updated successfully");
@@ -193,7 +195,7 @@ export default function NoteEdit() {
     const boardPin = board?.isProtected ? board.pin : null;
     const notePin = note?.isProtected ? note?.pin : null;
 
-    if (!note || !verifyProtectedPIN(enteredPIN, notePin, boardPin)) {
+    if (!note || !(await verifyProtectedPIN(enteredPIN, notePin, boardPin))) {
       throw new Error("Invalid PIN");
     }
 
@@ -299,17 +301,10 @@ export default function NoteEdit() {
 
             <div className="form-group">
               <label style={{ color: colors.text }}>Content</label>
-              <textarea
+              <RichTextEditor
                 value={form.content}
-                rows="6"
-                style={{
-                  backgroundColor: colors.background,
-                  borderColor: colors.border,
-                  color: colors.text,
-                }}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, content: e.target.value }))
-                }
+                onChange={(content) => setForm((p) => ({ ...p, content }))}
+                placeholder="Write your note..."
               />
             </div>
 

@@ -2,14 +2,17 @@ import { useEffect, useMemo, useState } from "react";
 
 import { useTheme } from "../../contexts/ThemeContext";
 import { useAuth } from "../../contexts/AuthContext";
+
 import NoteCard from "./NoteCard";
 
 import Drawer from "../common/Drawer";
 import Pagination from "../common/Pagination";
 import SearchWithSuggestions from "../common/SearchWithSuggestions";
+
 import { usePagination } from "../../hooks/usePagination";
 
 import { isNoteTrashed } from "../../utils/trashStorage";
+import { richTextToPlainText } from "../../utils/helpers";
 
 const NoteList = ({ notes, boardId, onEdit, onDelete, onPin, onClone }) => {
   const { colors } = useTheme();
@@ -24,6 +27,7 @@ const NoteList = ({ notes, boardId, onEdit, onDelete, onPin, onClone }) => {
   // Always keep hooks order stable: early-returns based on notes length
   // are handled at the UI layer below.
   // Note: keep hooks order stable (no early returns before hooks)
+
   const safeNotes = useMemo(() => (Array.isArray(notes) ? notes : []), [notes]);
 
   const visibleNotes = useMemo(
@@ -39,7 +43,11 @@ const NoteList = ({ notes, boardId, onEdit, onDelete, onPin, onClone }) => {
     return list
       .map((n) => ({
         id: n.id,
-        label: n.title || (n.content ? n.content.slice(0, 30) : "Untitled"),
+        label:
+          n.title ||
+          (n.content
+            ? richTextToPlainText(n.content).slice(0, 30)
+            : "Untitled"),
       }))
       .slice(0, 200);
   }, [visibleNotes]);
@@ -50,11 +58,13 @@ const NoteList = ({ notes, boardId, onEdit, onDelete, onPin, onClone }) => {
     const base = list.filter((n) => {
       const matchesPriority =
         priority === "all" ? true : (n.priority || "low") === priority;
+
       if (!matchesPriority) return false;
 
       if (!normalizedQuery) return true;
+
       const title = String(n.title || "").toLowerCase();
-      const content = String(n.content || "").toLowerCase();
+      const content = richTextToPlainText(n.content).toLowerCase();
 
       // board name is not passed into NoteList; but NoteCard shows boardId only.
       // We still support boardId textual match.
@@ -94,6 +104,7 @@ const NoteList = ({ notes, boardId, onEdit, onDelete, onPin, onClone }) => {
     const unpinned = base.filter((n) => !n.pinnedBy?.includes(currentUserId));
 
     const priorityOrder = { high: 0, medium: 1, low: 2 };
+
     const sortedUnpinned = [...unpinned].sort(
       (a, b) =>
         priorityOrder[a.priority || "low"] - priorityOrder[b.priority || "low"],
@@ -141,7 +152,7 @@ const NoteList = ({ notes, boardId, onEdit, onDelete, onPin, onClone }) => {
   // Reset page whenever search/filter inputs change.
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchText, priority]);
+  }, [searchText, priority, setCurrentPage]);
 
   return (
     <div className="note-list-container">
@@ -183,6 +194,7 @@ const NoteList = ({ notes, boardId, onEdit, onDelete, onPin, onClone }) => {
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <label className="text-sm text-muted">Priority</label>
+
             <select
               className="mt-1"
               value={priority}
@@ -258,6 +270,7 @@ const NoteList = ({ notes, boardId, onEdit, onDelete, onPin, onClone }) => {
               {paginatedPinned.length > 0 && (
                 <div className="note-section">
                   <h3 style={{ color: colors.text }}>⭐ Pinned Notes</h3>
+
                   <div className="note-grid">
                     {paginatedPinned.map((note) => (
                       <NoteCard
@@ -278,6 +291,7 @@ const NoteList = ({ notes, boardId, onEdit, onDelete, onPin, onClone }) => {
                 <h3 style={{ color: colors.text }}>
                   {allPinned.length > 0 ? "All Notes" : "Your Notes"}
                 </h3>
+
                 <div className="note-grid">
                   {paginatedUnpinned.map((note) => (
                     <NoteCard

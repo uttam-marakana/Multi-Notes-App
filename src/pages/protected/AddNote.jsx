@@ -19,6 +19,7 @@ import {
   verifyPIN,
 } from "../../utils/helpers";
 import ColorPicker from "../../components/ui/ColorPicker";
+import RichTextEditor from "../../components/ui/RichTextEditor";
 
 export default function AddNote() {
   const { currentUser } = useAuth();
@@ -34,7 +35,7 @@ export default function AddNote() {
     Boolean(board?.isProtected && !hasProtectedAccess("board", boardId)),
   );
   const titleRef = useRef();
-  const contentRef = useRef();
+  const [content, setContent] = useState("");
   const [priority, setPriority] = useState("low");
   const [noteColor, setNoteColor] = useState(priorityColors.low);
   const [isProtected, setIsProtected] = useState(false);
@@ -108,7 +109,7 @@ export default function AddNote() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const title = titleRef.current.value.trim();
-    const content = contentRef.current.value.trim();
+    const contentValue = content;
 
     if (!boardId) {
       toast.error("Board ID is required");
@@ -142,7 +143,7 @@ export default function AddNote() {
     try {
       await addNote(boardId, {
         title,
-        content,
+        content: contentValue,
         priority,
         color: noteColor,
         isProtected: board?.isProtected ? true : isProtected,
@@ -150,6 +151,7 @@ export default function AddNote() {
         pinHash:
           board?.isProtected && !isProtected && board?.pin ? board.pin : null,
         files: selectedFiles,
+        contentType: ["html"],
       });
 
       toast.success("Note created successfully!");
@@ -162,7 +164,7 @@ export default function AddNote() {
   };
 
   const handleBoardPINSubmit = async (enteredPIN) => {
-    if (!board || !verifyPIN(enteredPIN, board.pin)) {
+    if (!board || !(await verifyPIN(enteredPIN, board.pin))) {
       throw new Error("Invalid PIN");
     }
 
@@ -211,15 +213,10 @@ export default function AddNote() {
 
             <div className="form-group">
               <label style={{ color: colors.text }}>Content</label>
-              <textarea
-                ref={contentRef}
-                placeholder="Enter note content..."
-                rows="6"
-                style={{
-                  backgroundColor: colors.background,
-                  borderColor: colors.border,
-                  color: colors.text,
-                }}
+              <RichTextEditor
+                value={content}
+                onChange={setContent}
+                placeholder="Write your note... Use headings, lists, links, quotes, code and more."
               />
             </div>
 

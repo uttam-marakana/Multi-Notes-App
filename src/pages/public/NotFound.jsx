@@ -18,7 +18,7 @@ const NotFound = () => {
       <div style={{ position: "absolute", top: "1.5rem", left: "1.5rem" }}>
         <PageBackButton fallback="/" />
       </div>
-      <img src={page404} alt="404 Not Found" style={{ width: "50%" }} />
+      <img src={page404} alt="Page not found illustration" width="720" height="480" loading="lazy" decoding="async" style={{ width: "50%", maxWidth: "720px", height: "auto" }} />
       <h1 style={{ fontSize: "2rem", fontWeight: "bold"}}>
         Oops! Page Not Found
       </h1>

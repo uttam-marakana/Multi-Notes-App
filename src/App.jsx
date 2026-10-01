@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 // Import Context Providers
@@ -11,23 +11,23 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
 import LoadingSpinner from "./components/ui/LoadingSpinner";
+import SiteLayout from "./components/ui/SiteLayout";
+import SEO from "./components/ui/SEO";
 
-import Login from "./pages/public/Login";
-import SignUp from "./pages/public/SignUp";
-import ForgotPassword from "./pages/public/ForgotPassword";
-import Dashboard from "./pages/public/Dashboard";
-
-import BoardManager from "./pages/protected/BoardManager";
-import AddBoard from "./pages/protected/AddBoard";
-import BoardEdit from "./pages/protected/BoardEdit";
-import NoteManager from "./pages/protected/NoteManager";
-import AddNote from "./pages/protected/AddNote";
-import NoteEdit from "./pages/protected/NoteEdit";
-import NoteDetails from "./pages/protected/NoteDetails";
-import TrashBoards from "./pages/trash/TrashBoards";
-import TrashNotes from "./pages/trash/TrashNotes";
-import NotFound from "./pages/public/NotFound";
-
+const Login = lazy(() => import("./pages/public/Login"));
+const SignUp = lazy(() => import("./pages/public/SignUp"));
+const ForgotPassword = lazy(() => import("./pages/public/ForgotPassword"));
+const Dashboard = lazy(() => import("./pages/public/Dashboard"));
+const BoardManager = lazy(() => import("./pages/protected/BoardManager"));
+const AddBoard = lazy(() => import("./pages/protected/AddBoard"));
+const BoardEdit = lazy(() => import("./pages/protected/BoardEdit"));
+const NoteManager = lazy(() => import("./pages/protected/NoteManager"));
+const AddNote = lazy(() => import("./pages/protected/AddNote"));
+const NoteEdit = lazy(() => import("./pages/protected/NoteEdit"));
+const NoteDetails = lazy(() => import("./pages/protected/NoteDetails"));
+const TrashBoards = lazy(() => import("./pages/trash/TrashBoards"));
+const TrashNotes = lazy(() => import("./pages/trash/TrashNotes"));
+const NotFound = lazy(() => import("./pages/public/NotFound"));
 
 
 function App() {
@@ -38,8 +38,10 @@ function App() {
           <AuthProvider>
             <BoardProvider>
               <NoteProvider>
-                <div className="main-content">
-                  <Suspense
+                <SiteLayout>
+                  <SEO />
+                  <div className="main-content">
+                    <Suspense
                     fallback={<LoadingSpinner message="Loading page..." />}
                   >
                     <Routes>
@@ -123,8 +125,9 @@ function App() {
                       <Route path="*" element={<NotFound />} />
 
                     </Routes>
-                  </Suspense>
-                </div>
+                    </Suspense>
+                  </div>
+                </SiteLayout>
               </NoteProvider>
             </BoardProvider>
           </AuthProvider>

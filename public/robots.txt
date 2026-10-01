@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /login
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /boards
+Disallow: /notes
+Disallow: /trash/
+
+# The production build replaces this file with an absolute sitemap URL.

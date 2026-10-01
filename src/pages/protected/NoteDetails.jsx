@@ -7,6 +7,7 @@ import { useBoard } from "../../contexts/BoardContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import PINModal from "../../components/ui/PINModal";
 import PageBackButton from "../../components/ui/PageBackButton";
+import RichTextContent from "../../components/ui/RichTextContent";
 import {
   grantProtectedAccess,
   hasProtectedAccess,
@@ -55,7 +56,7 @@ export default function NoteDetails() {
     const notePin = note?.isProtected ? note?.pin : null;
 
     // verifyProtectedPIN already supports fallbackHash.
-    const ok = verifyProtectedPIN(enteredPIN, notePin, boardPin);
+    const ok = await verifyProtectedPIN(enteredPIN, notePin, boardPin);
     if (!ok) throw new Error("Invalid PIN");
 
     // Once verified, allow access for this note.
@@ -160,9 +161,10 @@ export default function NoteDetails() {
           </div>
 
           <div style={{ marginTop: "1rem" }}>
-            <p style={{ color: colors.textMuted, whiteSpace: "pre-wrap", marginBottom: "1rem" }}>
-              {note.content || "No content"}
-            </p>
+            <RichTextContent
+              value={note.content}
+              className="note-details-content"
+            />
 
             {note.files?.length > 0 && (
               <div className="note-files" style={{ borderColor: colors.border }}>
@@ -176,7 +178,7 @@ export default function NoteDetails() {
                     style={{ backgroundColor: colors.background, borderColor: colors.border, color: colors.text }}
                   >
                     {file.type?.startsWith("image/") ? (
-                      <img src={file.url} alt={file.name} className="note-file-thumb" />
+                      <img src={file.url} alt={file.name} className="note-file-thumb" loading="lazy" decoding="async" />
                     ) : (
                       <span className="note-file-icon">📎</span>
                     )}

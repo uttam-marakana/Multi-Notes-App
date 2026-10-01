@@ -2,212 +2,223 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useNavigate } from "react-router-dom";
-import ThemeToggle from "../../components/ui/ThemeToggle";
 import BoardManager from "../protected/BoardManager";
-import { CgLogIn, CgLogOut } from "react-icons/cg";
 import SearchWithSuggestions from "../../components/common/SearchWithSuggestions";
-import { FaSearch } from "react-icons/fa";
+import { FaLock, FaPlus, FaSearch } from "react-icons/fa";
+import { MdDashboard, MdPushPin, MdSpaceDashboard } from "react-icons/md";
 import { useBoard } from "../../contexts/BoardContext";
 
-
-import lightLogo from "../../assets/images/primary_light_logo.png";
-import darkLogo from "../../assets/images/primary_dark_logo.png";
-
 const Dashboard = () => {
-  const { currentUser, logout } = useAuth();
-  const [searchOpen, setSearchOpen] = useState(false);
-
-  const { theme, colors } = useTheme();
-  const [error, setError] = useState("");
+  const { currentUser } = useAuth();
+  const { colors } = useTheme();
+  const { boards } = useBoard();
   const navigate = useNavigate();
 
-  const { boards } = useBoard();
-
+  const [searchOpen, setSearchOpen] = useState(false);
   const [searchText, setSearchText] = useState("");
 
-
-  const suggestions = useMemo(() => {
-    const list = Array.isArray(boards) ? boards : [];
-    return list
-      .map((b) => ({
-        id: b.id,
-        label: b.name || "Untitled Board",
-      }))
-      .slice(0, 200);
-  }, [boards]);
-
-
   useEffect(() => {
-    // Auto re-lock all on Dashboard visit
-    const accessKey = "noteflow-protected-access";
-    if (typeof window !== "undefined" && sessionStorage.getItem(accessKey)) {
-      sessionStorage.removeItem(accessKey);
-    }
+    // Visiting Home is the intentional point at which protected UI access is re-locked.
+    sessionStorage.removeItem("noteflow-protected-access");
   }, []);
 
-  const handleLogout = async () => {
-    try {
-      setError("");
-      await logout();
-      navigate("/login");
-    } catch {
-      setError("Please try later");
-    }
-  };
+  const suggestions = useMemo(
+    () =>
+      (Array.isArray(boards) ? boards : []).map((board) => ({
+        id: board.id,
+        label: board.name || "Untitled Board",
+      })),
+    [boards],
+  );
 
-  const getGreetingMessage = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Good Morning";
-    if (hour < 18) return "Good Afternoon";
-    return "Good Evening";
-  };
+  const boardCount = boards?.length || 0;
 
-  const userLabel =
-    currentUser?.name ||
-    currentUser?.displayName ||
-    currentUser?.email?.split("@")[0];
+  const pinnedCount =
+    boards?.filter((board) => board.pinnedBy?.includes(currentUser?.uid))
+      .length || 0;
+
+  const protectedCount =
+    boards?.filter((board) => board.isProtected).length || 0;
 
   return (
-    <div
-      className="dashboard glass-container"
-      style={{ backgroundColor: colors.background }}
+    <main
+      className="dashboard"
+      style={{
+        backgroundColor: colors.background,
+        color: colors.text,
+      }}
     >
-      <div
-        className="dashboard-header glass-card"
-        style={{
-          backgroundColor: colors.surface,
-          borderBottomColor: colors.border,
-        }}
-      >
-        <div className="dashboard-header-content">
-          <div className="dashboard-brand">
-            <img
-              src={theme === "dark" ? lightLogo : darkLogo}
-              alt="Noteflow Logo"
-              className="dashboard-logo"
-              style={{ maxHeight: 50, marginRight: "0.75rem" }}
-            />
-            <div>
-              <h1 className="dashboard-title" style={{ color: colors.text }}>
-                Noteflow
-              </h1>
+      <section className="dashboard-content container">
+        <div className="dashboard-hero glass-card">
+          <div className="dashboard-hero-copy">
+            <div className="dashboard-eyebrow">
+              <MdDashboard />
+              {currentUser ? "Personal workspace" : "Guest workspace"}
             </div>
-          </div>
 
-          {currentUser && (
-            <div className="dashboard-welcome" style={{ color: colors.text }}>
-              <p className="greeting-text">
-                {getGreetingMessage()}, <strong>{userLabel}</strong>!
-              </p>
-            </div>
-          )}
-        </div>
+            <h1>
+              Keep every idea in one <span>clear place.</span>
+            </h1>
 
-        <div className="dashboard-actions">
-          <div
-            className="dashboard-header-search"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "var(--spacing-md)",
-            }}
-          >
-            <div
-              className="dashboard-search-icon"
-              aria-hidden="true"
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: "999px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                border: "1px solid var(--glass-border)",
-                background: "var(--glass-bg)",
-                color: "var(--color-primary)",
-                flex: "0 0 auto",
-              }}
-            >
+            <p>
+              Organize projects, quick thoughts, references, and private notes
+              into focused boards.
+              {currentUser
+                ? " Your workspace is synced with Firebase in real time."
+                : " Sign in when you&apos;re ready to save your work permanently."}
+            </p>
+
+            <div className="dashboard-hero-actions">
               <button
-                type="button"
-                onClick={() => setSearchOpen((v) => !v)}
-                style={{ all: "unset", cursor: "pointer", display: "flex'", alignItems: "center", justifyContent: "center" }}
-                aria-label="Toggle search"
-                aria-expanded={searchOpen}
+                className="btn btn-primary btn-lg"
+                onClick={() => {
+                  navigate(
+                    currentUser ? "/boards/add" : "/login?redirect=/boards/add",
+                  );
+                }}
               >
-                <span className="theme-icon">
-                  <FaSearch />
-                </span>
+                <FaPlus />
+                {currentUser ? "Create a board" : "Start with an account"}
               </button>
+
+              <button
+                className="btn btn-outline btn-lg"
+                type="button"
+                onClick={() => setSearchOpen((open) => !open)}
+              >
+                <FaSearch />
+                {searchOpen ? "Hide search" : "Search boards"}
+              </button>
+
+              {!currentUser && (
+                <button
+                  className="btn btn-secondary btn-lg"
+                  onClick={() => navigate("/signup")}
+                >
+                  Create account
+                </button>
+              )}
             </div>
-
-            {/** Search bar toggles visibility by clicking the icon */}
-            {searchOpen && (
-              <div style={{ display: "flex", alignItems: "center", gap: "var(--spacing-md)" }}>
-                <div style={{ width: "min(420px, 55vw)" }}>
-                  <SearchWithSuggestions
-                    label=""
-                    value={searchText}
-                    onChange={setSearchText}
-                    placeholder="Search boards by name or description..."
-                    suggestions={suggestions}
-                    getSuggestionLabel={(s) => s.label}
-                    onPickSuggestion={(s) => setSearchText(s?.label || "")}
-                  />
-                </div>
-
-
-              </div>
-            )}
-
           </div>
 
-          <ThemeToggle />
-          {currentUser ? (
+          <div className="dashboard-hero-visual" aria-hidden="true">
+            <div className="hero-orb hero-orb-one" />
+            <div className="hero-orb hero-orb-two" />
 
+            <div className="hero-note-card hero-note-back">
+              <span />
+              <span />
+              <span />
+            </div>
+
+            <div className="hero-note-card hero-note-front">
+              <div className="hero-note-icon">
+                <MdSpaceDashboard />
+              </div>
+
+              <strong>Focus board</strong>
+              <small>Ideas · Tasks · Notes</small>
+
+              <div className="hero-note-lines">
+                <i />
+                <i />
+                <i />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="dashboard-stats" aria-label="Workspace summary">
+          <div className="dashboard-stat glass-card">
+            <span className="dashboard-stat-icon">
+              <MdSpaceDashboard />
+            </span>
+
+            <div>
+              <strong>{boardCount}</strong>
+              <span>Boards</span>
+            </div>
+          </div>
+
+          <div className="dashboard-stat glass-card">
+            <span className="dashboard-stat-icon">
+              <MdPushPin />
+            </span>
+
+            <div>
+              <strong>{pinnedCount}</strong>
+              <span>Pinned</span>
+            </div>
+          </div>
+
+          <div className="dashboard-stat glass-card">
+            <span className="dashboard-stat-icon">
+              <FaLock />
+            </span>
+
+            <div>
+              <strong>{protectedCount}</strong>
+              <span>Protected</span>
+            </div>
+          </div>
+
+          <div className="dashboard-stat dashboard-stat-tip glass-card">
+            <span className="dashboard-stat-icon">
+              <MdDashboard />
+            </span>
+
+            <div>
+              <strong>Fast</strong>
+              <span>Real-time workspace</span>
+            </div>
+          </div>
+        </div>
+
+        {!currentUser && (
+          <div className="dashboard-guest-banner">
+            <div>
+              <strong>You&apos;re browsing as a guest.</strong>
+              <span>
+                Guest boards are local to this browser. Sign in to sync your
+                workspace.
+              </span>
+            </div>
 
             <button
-              onClick={handleLogout}
-              className="btn btn-danger"
-              title="Logout"
+              className="btn btn-light"
+              onClick={() => navigate("/login?redirect=/dashboard")}
             >
-              <CgLogOut /> Logout
+              Sign in
             </button>
-          ) : (
-            <button
-              onClick={() => navigate("/login")}
-              className="btn btn-primary"
-            >
-              <CgLogIn /> Login
-            </button>
-          )}
-        </div>
-      </div>
+          </div>
+        )}
 
-      {error && (
-        <div
-          className="alert alert-error"
-          style={{ margin: "var(--spacing-lg)" }}
-        >
-          {error}
-        </div>
-      )}
+        {searchOpen && (
+          <section
+            className="dashboard-search-panel glass-card"
+            aria-label="Search boards"
+          >
+            <div className="dashboard-search-inner">
+              <FaSearch className="dashboard-search-panel-icon" />
 
-      {!currentUser && (
-        <div className="btn-greet_banner">
-          <strong>Welcome!</strong> Please{" "}
-          <button className="btn-log" onClick={() => navigate("/login")}>
-            Login
-          </button>{" "}
-          to create and manage boards and notes.
-        </div>
-      )}
+              <SearchWithSuggestions
+                label=""
+                value={searchText}
+                onChange={setSearchText}
+                placeholder="Search boards by name or description..."
+                suggestions={suggestions}
+                getSuggestionLabel={(suggestion) => suggestion.label}
+                onPickSuggestion={(suggestion) =>
+                  setSearchText(suggestion?.label || "")
+                }
+              />
+            </div>
+          </section>
+        )}
 
-      <div className="dashboard-content container">
-        <BoardManager userId={currentUser?.uid} />
-      </div>
-
-    </div>
+        <BoardManager searchText={searchText} />
+      </section>
+    </main>
   );
 };
 
