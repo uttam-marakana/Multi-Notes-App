@@ -3832,6 +3832,7 @@ textarea::placeholder {
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  padding: 10px;
 }
 
 .dashboard-hero h1 {
@@ -3997,7 +3998,8 @@ textarea::placeholder {
 
 .dashboard-stat strong,
 .dashboard-stat span {
-  display: block;
+  display: flex;
+  justify-content: center;
 }
 
 .dashboard-stat strong {
@@ -4744,10 +4746,6 @@ select:focus,
 .auth-page {
   min-height: calc(100vh - 72px);
   background: transparent !important;
-}
-
-.auth-container {
-  width: min(1080px, calc(100% - 2rem));
 }
 
 .auth-card {
