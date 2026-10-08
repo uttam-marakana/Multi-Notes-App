@@ -10,8 +10,10 @@ import { RiEye2Line, RiEyeCloseFill } from "react-icons/ri";
 export default function Login() {
   const emailRef = useRef();
   const passwordRef = useRef();
+
   const { login } = useAuth();
   const { colors } = useTheme();
+
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -24,8 +26,17 @@ export default function Login() {
     const email = emailRef.current.value.trim();
     const password = passwordRef.current.value;
 
-    if (!email || !password) {
-      toast.error("Please fill in all fields");
+    // Email validation
+    if (!email) {
+      toast.error("Please enter your email address.");
+      emailRef.current.focus();
+      return;
+    }
+
+    // Password validation
+    if (!password) {
+      toast.error("Please enter your password.");
+      passwordRef.current.focus();
       return;
     }
 
@@ -36,16 +47,16 @@ export default function Login() {
 
       toast.success("Login successful!");
 
-      // ✅ Smart redirect system
+      // Smart redirect system
       const redirectTo = searchParams.get("redirect");
 
       if (redirectTo) {
         navigate(redirectTo, { replace: true });
       } else {
-        navigate("/", { replace: true }); // index page
+        navigate("/", { replace: true });
       }
     } catch (error) {
-      toast.error(error.message || "Failed to log in");
+      toast.error(error.message || "Unable to sign in. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -55,10 +66,12 @@ export default function Login() {
     <div className="auth-page" style={{ backgroundColor: colors.background }}>
       <div className="auth-header">
         <PageBackButton fallback="/" label="Back" />
+
         <div className="auth-header-actions">
           <h1 className="auth-brand" style={{ color: colors.primary }}>
             Noteflow
           </h1>
+
           <ThemeToggle />
         </div>
       </div>
@@ -83,11 +96,13 @@ export default function Login() {
           <form className="auth-form" onSubmit={handleSubmit}>
             <div className="form-group">
               <label style={{ color: colors.text }}>Email Address</label>
+
               <input
                 ref={emailRef}
                 type="email"
                 placeholder="you@example.com"
                 required
+                autoComplete="email"
                 style={{
                   backgroundColor: colors.background,
                   borderColor: colors.border,
@@ -105,6 +120,7 @@ export default function Login() {
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
                   required
+                  autoComplete="current-password"
                   style={{
                     backgroundColor: colors.background,
                     borderColor: colors.border,
@@ -117,7 +133,7 @@ export default function Login() {
                   className="password-toggle"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => setShowPassword((prev) => !prev)}
-                  aria-label="Toggle password visibility"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <RiEyeCloseFill /> : <RiEye2Line />}
                 </button>
@@ -128,14 +144,22 @@ export default function Login() {
               type="submit"
               className="btn btn-primary btn-lg"
               disabled={loading}
-              style={{ width: "100%", marginTop: "1.5rem" }}
+              style={{
+                width: "100%",
+                marginTop: "1.5rem",
+              }}
             >
               {loading ? "Signing in..." : "Sign In"}
             </button>
           </form>
 
           <div className="auth-footer">
-            <p style={{ color: colors.textMuted, marginBottom: "0.75rem" }}>
+            <p
+              style={{
+                color: colors.textMuted,
+                marginBottom: "0.75rem",
+              }}
+            >
               Don&apos;t have an account?{" "}
               <Link
                 to="/signup"
@@ -149,7 +173,12 @@ export default function Login() {
               </Link>
             </p>
 
-            <p style={{ color: colors.textMuted, marginBottom: 0 }}>
+            <p
+              style={{
+                color: colors.textMuted,
+                marginBottom: 0,
+              }}
+            >
               <Link
                 to="/forgot-password"
                 style={{
@@ -162,16 +191,17 @@ export default function Login() {
               </Link>
             </p>
           </div>
-
         </div>
 
         <div className="auth-features" style={{ color: colors.textMuted }}>
           <div className="feature">
             <span>✨</span> Premium Design
           </div>
+
           <div className="feature">
             <span>🔒</span> Secure Notes
           </div>
+
           <div className="feature">
             <span>🎨</span> Dark & Light Mode
           </div>
