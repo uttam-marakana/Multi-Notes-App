@@ -145,17 +145,75 @@ export function AuthProvider({ children }) {
   // ✅ LOGIN
   const login = async (email, password) => {
     try {
+      // Client-side validation
+      if (!email?.trim()) {
+        throw new Error("Please enter your email address.");
+      }
+
+      if (!password) {
+        throw new Error("Please enter your password.");
+      }
+
       const userCredential = await signInWithEmailAndPassword(
         auth,
-        email,
+        email.trim(),
         password,
       );
 
       clearProtectedSession();
-      return userCredential; // ✅ consistent return
+
+      return userCredential;
     } catch (error) {
-      console.error("Login Error:", error.message);
-      throw error;
+      console.error("Login Error:", error);
+
+      let message = "Unable to sign in. Please try again.";
+
+      switch (error.code) {
+        case "auth/invalid-email":
+          message = "Please enter a valid email address.";
+          break;
+
+        case "auth/wrong-password":
+        case "auth/user-not-found":
+        case "auth/invalid-credential":
+          message = "Incorrect email or password. Please try again.";
+          break;
+
+        case "auth/user-disabled":
+          message = "This account has been disabled. Please contact support.";
+          break;
+
+        case "auth/too-many-requests":
+          message =
+            "Too many unsuccessful login attempts. Please try again later.";
+          break;
+
+        case "auth/network-request-failed":
+          message =
+            "Network error. Please check your internet connection and try again.";
+          break;
+
+        case "auth/operation-not-allowed":
+          message = "Email and password login is currently unavailable.";
+          break;
+
+        case "auth/invalid-api-key":
+          message =
+            "Authentication is currently unavailable. Please try again later.";
+          break;
+
+        default:
+          // Keep custom validation messages
+          if (
+            error.message === "Please enter your email address." ||
+            error.message === "Please enter your password."
+          ) {
+            message = error.message;
+          }
+          break;
+      }
+
+      throw new Error(message);
     }
   };
 
